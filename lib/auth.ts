@@ -2,8 +2,8 @@ import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { memoryDb } from "./db";
-import { UserProfile } from "@/types";
-import { DEMO_USER_ID, demoUser } from "./seed-data";
+import { UserProfile, UserRole, UserStatus, UserPermissions } from "@/types";
+import { DEMO_USER_ID, DEMO_ADMIN_ID, demoUser, demoAdminUser, DEFAULT_PATIENT_PERMISSIONS } from "./seed-data";
 
 const JWT_SECRET_STRING =
   process.env.AUTH_SECRET || "glucocare-super-secret-production-grade-key-2025-health";
@@ -14,6 +14,8 @@ export interface SessionPayload {
   userId: string;
   email: string;
   name: string;
+  role?: UserRole;
+  status?: UserStatus;
   diabetesType: string;
   glucoseUnit: string;
 }
@@ -58,6 +60,11 @@ export async function getSessionUser(): Promise<UserProfile | null> {
       return null;
     }
 
+    if (payload.userId === DEMO_ADMIN_ID) {
+      const user = memoryDb.getUserById(DEMO_ADMIN_ID);
+      return user || demoAdminUser;
+    }
+
     if (payload.userId === DEMO_USER_ID) {
       const user = memoryDb.getUserById(DEMO_USER_ID);
       return user || demoUser;
@@ -65,7 +72,12 @@ export async function getSessionUser(): Promise<UserProfile | null> {
 
     const user = memoryDb.getUserById(payload.userId);
     if (user) {
-      return user;
+      return {
+        ...user,
+        role: user.role || "patient",
+        status: user.status || "active",
+        permissions: user.permissions || { ...DEFAULT_PATIENT_PERMISSIONS },
+      };
     }
 
     // Fallback profile from payload
@@ -73,6 +85,9 @@ export async function getSessionUser(): Promise<UserProfile | null> {
       id: payload.userId,
       name: payload.name || "Patient",
       email: payload.email,
+      role: (payload.role as UserRole) || "patient",
+      status: (payload.status as UserStatus) || "active",
+      permissions: { ...DEFAULT_PATIENT_PERMISSIONS },
       diabetesType: (payload.diabetesType as UserProfile["diabetesType"]) || "Type 2",
       glucoseUnit: (payload.glucoseUnit as UserProfile["glucoseUnit"]) || "mg/dL",
       targetRange: {
@@ -91,4 +106,22 @@ export async function getSessionUser(): Promise<UserProfile | null> {
     return null;
   }
 }
+
+export function isAdmin(user: UserProfile | null | undefined): boolean {
+  return Boolean(user && user.role === "admin" && user.status !== "suspended");
+}
+
+export function isSuspended(user: UserProfile | null | undefined): boolean {
+  return Boolean(user && user.status === "suspended");
+}
+
+export function hasPermission(
+  user: UserProfile | null | undefined,
+  permission: keyof UserPermissions
+): boolean {
+  if (!user || user.status === "suspended") return false;
+  if (user.role === "admin") return true; // Admins have master rights across all actions
+  return Boolean(user.permissions && user.permissions[permission]);
+}
+
 

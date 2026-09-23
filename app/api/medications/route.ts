@@ -1,17 +1,25 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, isAdmin, isSuspended, hasPermission } from "@/lib/auth";
 import { medicationSchema } from "@/lib/validations";
 import { memoryDb } from "@/lib/db";
 import { Medication } from "@/types";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const medications = memoryDb.getMedications(user.id);
+    if (isSuspended(user)) {
+      return NextResponse.json({ error: "Account suspended by administrator" }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const targetUserId = searchParams.get("targetUserId");
+    const effectiveUserId = (isAdmin(user) && targetUserId) ? targetUserId : user.id;
+
+    const medications = memoryDb.getMedications(effectiveUserId);
     return NextResponse.json({ medications });
   } catch (error) {
     console.error("GET /api/medications error:", error);
@@ -25,6 +33,18 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (isSuspended(user)) {
+      return NextResponse.json({ error: "Account suspended by administrator" }, { status: 403 });
+    }
+
+    if (!hasPermission(user, "canManageMedications")) {
+      return NextResponse.json(
+        { error: "Access denied: Medication management permission has been restricted by your administrator" },
+        { status: 403 }
+      );
+    }
+
 
     const body = await req.json();
     const result = medicationSchema.safeParse(body);

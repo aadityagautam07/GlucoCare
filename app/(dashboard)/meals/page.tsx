@@ -10,5 +10,5 @@ export default async function MealsPage() {
   const meals = memoryDb.getMeals(user.id);
   const rations = memoryDb.getRations(user.id);
 
-  return <MealsView meals={meals} rations={rations} />;
+  return <MealsView meals={meals} rations={rations} user={user} />;
 }

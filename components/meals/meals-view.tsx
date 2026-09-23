@@ -16,20 +16,25 @@ import { MealTimeline } from "./meal-timeline";
 import { AddMealDialog } from "./add-meal-dialog";
 import { RationInventory } from "./ration-inventory";
 import { RationMealPlanner } from "./ration-meal-planner";
-import { Meal, RationItem } from "@/types";
+import { Meal, RationItem, UserProfile } from "@/types";
 import { MealInput } from "@/lib/validations";
 import { useRouter } from "next/navigation";
+import { PermissionRestricted } from "@/components/common/permission-guard";
+import { Lock } from "lucide-react";
 
 interface MealsViewProps {
   meals: Meal[];
   rations: RationItem[];
+  user?: UserProfile | null;
 }
 
 type MealsTab = "diary" | "rations" | "planner";
 
-export function MealsView({ meals, rations }: MealsViewProps) {
+export function MealsView({ meals, rations, user }: MealsViewProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = React.useState<MealsTab>("diary");
+  const canManageRation = user?.role === "admin" || (user?.permissions?.canManageRation ?? true);
+
   const [addModalOpen, setAddModalOpen] = React.useState(false);
   const [prefilledMeal, setPrefilledMeal] = React.useState<
     Partial<MealInput> | undefined
@@ -114,7 +119,8 @@ export function MealsView({ meals, rations }: MealsViewProps) {
         >
           <Package className="h-4 w-4" />
           <span>Monthly Rations & Pantry</span>
-          {lowStockCount > 0 && (
+          {!canManageRation && <Lock className="h-3 w-3 text-slate-400" />}
+          {canManageRation && lowStockCount > 0 && (
             <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-0.5">
               <AlertTriangle className="h-2.5 w-2.5" />
               {lowStockCount}
@@ -132,6 +138,7 @@ export function MealsView({ meals, rations }: MealsViewProps) {
         >
           <ChefHat className="h-4 w-4" />
           <span>Ration Meal Configurator</span>
+          {!canManageRation && <Lock className="h-3 w-3 text-slate-400" />}
         </button>
       </div>
 
@@ -205,15 +212,29 @@ export function MealsView({ meals, rations }: MealsViewProps) {
 
       {/* TAB 2: Monthly Rations & Pantry */}
       {activeTab === "rations" && (
-        <RationInventory rations={rations} onRefresh={handleRefresh} />
+        canManageRation ? (
+          <RationInventory rations={rations} onRefresh={handleRefresh} />
+        ) : (
+          <PermissionRestricted
+            title="Monthly Ration Management Restricted"
+            description="Access to monthly pantry inventory and staple quota tracking has been restricted for your account by your system administrator."
+          />
+        )
       )}
 
       {/* TAB 3: Ration-Based Meal Configurator */}
       {activeTab === "planner" && (
-        <RationMealPlanner
-          rations={rations}
-          onCookAndLog={handleCookAndLog}
-        />
+        canManageRation ? (
+          <RationMealPlanner
+            rations={rations}
+            onCookAndLog={handleCookAndLog}
+          />
+        ) : (
+          <PermissionRestricted
+            title="Ration Meal Planner Restricted"
+            description="Automated ration meal planning and recipe suggestions have been restricted for your account by your system administrator."
+          />
+        )
       )}
 
       {/* Add Meal Dialog */}

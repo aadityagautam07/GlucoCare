@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, isAdmin, isSuspended, hasPermission } from "@/lib/auth";
 import { rationItemSchema } from "@/lib/validations";
 import { memoryDb } from "@/lib/db";
 import { RationItem } from "@/types";
@@ -11,10 +11,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (isSuspended(user)) {
+      return NextResponse.json({ error: "Account suspended by administrator" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const month = searchParams.get("month") || undefined;
+    const targetUserId = searchParams.get("targetUserId");
 
-    const rations = memoryDb.getRations(user.id, month);
+    const effectiveUserId = (isAdmin(user) && targetUserId) ? targetUserId : user.id;
+
+    const rations = memoryDb.getRations(effectiveUserId, month);
     return NextResponse.json({ rations });
   } catch (error) {
     console.error("GET /api/rations error:", error);
@@ -28,6 +35,18 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (isSuspended(user)) {
+      return NextResponse.json({ error: "Account suspended by administrator" }, { status: 403 });
+    }
+
+    if (!hasPermission(user, "canManageRation")) {
+      return NextResponse.json(
+        { error: "Access denied: Ration management permission has been restricted by your administrator" },
+        { status: 403 }
+      );
+    }
+
 
     const body = await req.json();
     const result = rationItemSchema.safeParse(body);

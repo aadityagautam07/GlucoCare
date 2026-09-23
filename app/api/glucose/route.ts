@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
+import { getSessionUser, isAdmin, isSuspended, hasPermission } from "@/lib/auth";
 import { glucoseReadingSchema } from "@/lib/validations";
 import { memoryDb } from "@/lib/db";
 import { GlucoseReading } from "@/types";
@@ -12,11 +12,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (isSuspended(user)) {
+      return NextResponse.json({ error: "Account suspended by administrator" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(req.url);
     const limitParam = searchParams.get("limit");
     const limit = limitParam ? parseInt(limitParam, 10) : undefined;
+    const targetUserId = searchParams.get("targetUserId");
 
-    const readings = memoryDb.getGlucoseReadings(user.id);
+    const effectiveUserId = (isAdmin(user) && targetUserId) ? targetUserId : user.id;
+
+    const readings = memoryDb.getGlucoseReadings(effectiveUserId);
     const sliced = limit ? readings.slice(0, limit) : readings;
 
     return NextResponse.json({ readings: sliced });
@@ -32,6 +39,18 @@ export async function POST(req: Request) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (isSuspended(user)) {
+      return NextResponse.json({ error: "Account suspended by administrator" }, { status: 403 });
+    }
+
+    if (!hasPermission(user, "canLogGlucose")) {
+      return NextResponse.json(
+        { error: "Access denied: Glucose logging permission has been restricted by your administrator" },
+        { status: 403 }
+      );
+    }
+
 
     const body = await req.json();
     const result = glucoseReadingSchema.safeParse(body);

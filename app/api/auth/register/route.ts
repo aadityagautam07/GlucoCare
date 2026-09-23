@@ -3,6 +3,7 @@ import { registerSchema } from "@/lib/validations";
 import { memoryDb } from "@/lib/db";
 import { createSessionToken, hashPassword, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { UserProfile } from "@/types";
+import { DEFAULT_PATIENT_PERMISSIONS } from "@/lib/seed-data";
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +35,9 @@ export async function POST(req: Request) {
       id: newUserId,
       name,
       email,
+      role: "patient",
+      status: "active",
+      permissions: { ...DEFAULT_PATIENT_PERMISSIONS },
       passwordHash,
       diabetesType,
       glucoseUnit,
@@ -56,9 +60,12 @@ export async function POST(req: Request) {
       userId: newUser.id,
       email: newUser.email,
       name: newUser.name,
+      role: newUser.role,
+      status: newUser.status,
       diabetesType: newUser.diabetesType,
       glucoseUnit: newUser.glucoseUnit,
     });
+
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...safeProfile } = newUser;

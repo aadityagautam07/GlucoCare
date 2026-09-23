@@ -8,14 +8,53 @@ import {
   Appointment,
   TodayPlanItem,
   RationItem,
+  UserPermissions,
 } from "@/types";
 
+export const DEFAULT_PATIENT_PERMISSIONS: UserPermissions = {
+  canLogGlucose: true,
+  canManageMedications: true,
+  canLogMeals: true,
+  canManageRation: true,
+  canLogActivity: true,
+  canManageAppointments: true,
+  canViewReports: true,
+  canExportData: true,
+};
+
+export const DEFAULT_DOCTOR_PERMISSIONS: UserPermissions = {
+  canLogGlucose: true,
+  canManageMedications: true,
+  canLogMeals: true,
+  canManageRation: false,
+  canLogActivity: true,
+  canManageAppointments: true,
+  canViewReports: true,
+  canExportData: true,
+};
+
+export const DEFAULT_ADMIN_PERMISSIONS: UserPermissions = {
+  canLogGlucose: true,
+  canManageMedications: true,
+  canLogMeals: true,
+  canManageRation: true,
+  canLogActivity: true,
+  canManageAppointments: true,
+  canViewReports: true,
+  canExportData: true,
+};
+
 export const DEMO_USER_ID = "demo-patient-001";
+export const DEMO_ADMIN_ID = "demo-admin-001";
+export const DEMO_DOCTOR_ID = "demo-doctor-001";
 
 export const demoUser: UserProfile = {
   id: DEMO_USER_ID,
   name: "Eleanor Brooks",
   email: "eleanor.brooks@example.com",
+  role: "patient",
+  status: "active",
+  permissions: { ...DEFAULT_PATIENT_PERMISSIONS },
   diabetesType: "Type 2",
   glucoseUnit: "mg/dL",
   targetRange: {
@@ -30,6 +69,99 @@ export const demoUser: UserProfile = {
   },
   createdAt: "2024-01-15T08:00:00.000Z",
 };
+
+export const demoAdminUser: UserProfile = {
+  id: DEMO_ADMIN_ID,
+  name: "Dr. Marcus Vance (Admin)",
+  email: "admin@glucocare.health",
+  role: "admin",
+  status: "active",
+  permissions: { ...DEFAULT_ADMIN_PERMISSIONS },
+  diabetesType: "Type 2",
+  glucoseUnit: "mg/dL",
+  targetRange: {
+    fastingMin: 70,
+    fastingMax: 130,
+    postMealMax: 180,
+  },
+  notifications: {
+    medicationReminders: true,
+    glucoseReminders: true,
+    appointmentReminders: true,
+  },
+  createdAt: "2023-11-01T09:00:00.000Z",
+};
+
+export const demoDoctorUser: UserProfile = {
+  id: DEMO_DOCTOR_ID,
+  name: "Dr. Sarah Chen, MD",
+  email: "sarah.chen@glucocare.health",
+  role: "doctor",
+  status: "active",
+  permissions: { ...DEFAULT_DOCTOR_PERMISSIONS },
+  diabetesType: "Other",
+  glucoseUnit: "mg/dL",
+  targetRange: {
+    fastingMin: 70,
+    fastingMax: 130,
+    postMealMax: 180,
+  },
+  notifications: {
+    medicationReminders: false,
+    glucoseReminders: false,
+    appointmentReminders: true,
+  },
+  createdAt: "2024-02-10T10:00:00.000Z",
+};
+
+export const demoSeedUsers: UserProfile[] = [
+  demoUser,
+  demoAdminUser,
+  demoDoctorUser,
+  {
+    id: "demo-patient-002",
+    name: "Arthur Pendelton",
+    email: "arthur.pendelton@example.com",
+    role: "patient",
+    status: "active",
+    permissions: {
+      ...DEFAULT_PATIENT_PERMISSIONS,
+      canManageRation: false, // Ration restricted by admin
+    },
+    diabetesType: "Type 2",
+    glucoseUnit: "mg/dL",
+    targetRange: { fastingMin: 80, fastingMax: 140, postMealMax: 190 },
+    notifications: { medicationReminders: true, glucoseReminders: true, appointmentReminders: false },
+    createdAt: "2024-03-01T11:20:00.000Z",
+  },
+  {
+    id: "demo-patient-003",
+    name: "Chloe Martinez",
+    email: "chloe.martinez@example.com",
+    role: "patient",
+    status: "active",
+    permissions: { ...DEFAULT_PATIENT_PERMISSIONS },
+    diabetesType: "Type 1",
+    glucoseUnit: "mg/dL",
+    targetRange: { fastingMin: 70, fastingMax: 120, postMealMax: 160 },
+    notifications: { medicationReminders: true, glucoseReminders: true, appointmentReminders: true },
+    createdAt: "2024-03-12T14:45:00.000Z",
+  },
+  {
+    id: "demo-patient-004",
+    name: "Robert Taylor",
+    email: "robert.taylor@example.com",
+    role: "patient",
+    status: "suspended",
+    permissions: { ...DEFAULT_PATIENT_PERMISSIONS, canLogGlucose: false },
+    diabetesType: "Prediabetes",
+    glucoseUnit: "mg/dL",
+    targetRange: { fastingMin: 70, fastingMax: 110, postMealMax: 140 },
+    notifications: { medicationReminders: false, glucoseReminders: false, appointmentReminders: false },
+    createdAt: "2024-02-18T08:15:00.000Z",
+  },
+];
+
 
 // Generate date strings relative to today for a live feel
 function getRelativeDateStr(daysAgo: number): string {

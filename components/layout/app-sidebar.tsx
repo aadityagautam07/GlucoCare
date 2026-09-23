@@ -16,6 +16,7 @@ import {
   User,
   LogOut,
   HeartPulse,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types";
@@ -121,6 +122,34 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </nav>
         </div>
 
+        {user?.role === "admin" && (
+          <div>
+            <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-purple-700 flex items-center justify-between">
+              <span>Governance</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-800">
+                PRO
+              </span>
+            </div>
+            <nav className="space-y-1">
+              <Link
+                href="/admin"
+                className={cn(
+                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150",
+                  pathname?.startsWith("/admin")
+                    ? "bg-purple-50 text-purple-900 border border-purple-200/80 shadow-xs"
+                    : "text-purple-700 hover:bg-purple-50/70"
+                )}
+              >
+                <ShieldCheck className="h-4 w-4 shrink-0 text-purple-600" />
+                <span>Admin Portal</span>
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-purple-200/70 text-purple-900 uppercase tracking-wider">
+                  Admin
+                </span>
+              </Link>
+            </nav>
+          </div>
+        )}
+
         <div>
           <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
             Account & Preferences
@@ -197,9 +226,24 @@ export function AppSidebar({ user }: AppSidebarProps) {
               {user?.name ? user.name.slice(0, 2).toUpperCase() : "PT"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold text-slate-800 truncate">
-                {user?.name || "Patient"}
-              </p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-semibold text-slate-800 truncate">
+                  {user?.name || "Patient"}
+                </p>
+                {user?.role && (
+                  <span
+                    className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                      user.role === "admin"
+                        ? "bg-purple-100 text-purple-700"
+                        : user.role === "doctor"
+                        ? "bg-teal-100 text-teal-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {user.role}
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-slate-600 truncate">
                 {user?.diabetesType || "Type 2"} • {user?.glucoseUnit || "mg/dL"}
               </p>

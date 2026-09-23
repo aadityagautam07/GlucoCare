@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 import {
   demoUser,
+  demoAdminUser,
+  demoSeedUsers,
   demoGlucoseReadings,
   demoMedications,
   demoMedicationLogs,
@@ -9,6 +11,7 @@ import {
   demoAppointments,
   demoRationItems,
   DEMO_USER_ID,
+  DEMO_ADMIN_ID,
 } from "./seed-data";
 import {
   GlucoseReading,
@@ -19,6 +22,11 @@ import {
   Appointment,
   UserProfile,
   RationItem,
+  UserRole,
+  UserStatus,
+  UserPermissions,
+  AdminUserSummary,
+  AdminSystemStats,
 } from "@/types";
 
 interface MongooseCache {
@@ -91,10 +99,14 @@ declare global {
 function getMemoryStore(): InMemStore {
   if (!global.memoryStore) {
     const userMap = new Map<string, UserProfile & { passwordHash?: string }>();
-    userMap.set(DEMO_USER_ID, {
-      ...demoUser,
-      passwordHash: "$2a$10$wT282gY6E1G6v6hQ.q1j2uR4v6zQZ7yK1m0N3p5s9o4X8j7h6f5d2", // "demopatient123"
-    });
+
+    // Populate seed users
+    for (const seed of demoSeedUsers) {
+      userMap.set(seed.id, {
+        ...seed,
+        passwordHash: "$2a$10$wT282gY6E1G6v6hQ.q1j2uR4v6zQZ7yK1m0N3p5s9o4X8j7h6f5d2", // default hash
+      });
+    }
 
     global.memoryStore = {
       users: userMap,
@@ -138,6 +150,114 @@ export const memoryDb = {
     store.users.set(user.id, user);
     return user;
   },
+
+  getAllUsers(): AdminUserSummary[] {
+    const store = getMemoryStore();
+    const summaries: AdminUserSummary[] = [];
+
+    for (const u of store.users.values()) {
+      const readings = store.glucose.filter((g) => g.userId === u.id);
+      const latestReading = readings[0];
+
+      summaries.push({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role || "patient",
+        status: u.status || "active",
+        permissions: u.permissions || {
+          canLogGlucose: true,
+          canManageMedications: true,
+          canLogMeals: true,
+          canManageRation: true,
+          canLogActivity: true,
+          canManageAppointments: true,
+          canViewReports: true,
+          canExportData: true,
+        },
+        diabetesType: u.diabetesType,
+        readingsCount: readings.length,
+        lastActive: latestReading ? latestReading.measuredAt : u.createdAt,
+        createdAt: u.createdAt,
+      });
+    }
+
+    return summaries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  },
+
+  updateUser(id: string, updates: Partial<UserProfile>): UserProfile | null {
+    const store = getMemoryStore();
+    const existing = store.users.get(id);
+    if (!existing) return null;
+
+    const updated: UserProfile & { passwordHash?: string } = {
+      ...existing,
+      ...updates,
+      permissions: updates.permissions
+        ? { ...existing.permissions, ...updates.permissions }
+        : existing.permissions,
+    };
+    store.users.set(id, updated);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...profile } = updated;
+    return profile;
+  },
+
+  updateUserRoleAndPermissions(
+    id: string,
+    role: UserRole,
+    status: UserStatus,
+    permissions: Partial<UserPermissions>
+  ): UserProfile | null {
+    const store = getMemoryStore();
+    const existing = store.users.get(id);
+    if (!existing) return null;
+
+    const updated: UserProfile & { passwordHash?: string } = {
+      ...existing,
+      role,
+      status,
+      permissions: {
+        ...existing.permissions,
+        ...permissions,
+      },
+    };
+    store.users.set(id, updated);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash, ...profile } = updated;
+    return profile;
+  },
+
+  deleteUser(id: string): boolean {
+    const store = getMemoryStore();
+    const deleted = store.users.delete(id);
+    if (deleted) {
+      store.glucose = store.glucose.filter((g) => g.userId !== id);
+      store.medications = store.medications.filter((m) => m.userId !== id);
+      store.medicationLogs = store.medicationLogs.filter((l) => l.userId !== id);
+      store.meals = store.meals.filter((m) => m.userId !== id);
+      store.activities = store.activities.filter((a) => a.userId !== id);
+      store.appointments = store.appointments.filter((a) => a.userId !== id);
+      store.rations = store.rations.filter((r) => r.userId !== id);
+    }
+    return deleted;
+  },
+
+  getAdminStats(): AdminSystemStats {
+    const store = getMemoryStore();
+    const users = Array.from(store.users.values());
+
+    return {
+      totalUsers: users.length,
+      activePatients: users.filter((u) => (u.role || "patient") === "patient" && (u.status || "active") === "active").length,
+      totalDoctors: users.filter((u) => u.role === "doctor").length,
+      totalAdmins: users.filter((u) => u.role === "admin").length,
+      totalReadingsLogged: store.glucose.length,
+      totalMedicationsTracked: store.medications.length,
+      suspendedUsers: users.filter((u) => u.status === "suspended").length,
+    };
+  },
+
 
   // Glucose
   getGlucoseReadings(userId: string): GlucoseReading[] {

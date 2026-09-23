@@ -16,10 +16,28 @@ export interface UserTargetRange {
   postMealMax: number; // default 180 mg/dL
 }
 
+export type UserRole = "admin" | "doctor" | "patient" | "caregiver";
+
+export type UserStatus = "active" | "suspended";
+
+export interface UserPermissions {
+  canLogGlucose: boolean;
+  canManageMedications: boolean;
+  canLogMeals: boolean;
+  canManageRation: boolean;
+  canLogActivity: boolean;
+  canManageAppointments: boolean;
+  canViewReports: boolean;
+  canExportData: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
+  role: UserRole;
+  status: UserStatus;
+  permissions: UserPermissions;
   diabetesType: DiabetesType;
   glucoseUnit: GlucoseUnit;
   targetRange: UserTargetRange;
@@ -30,6 +48,30 @@ export interface UserProfile {
   };
   createdAt: string;
 }
+
+export interface AdminUserSummary {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+  permissions: UserPermissions;
+  diabetesType: DiabetesType;
+  readingsCount?: number;
+  lastActive?: string;
+  createdAt: string;
+}
+
+export interface AdminSystemStats {
+  totalUsers: number;
+  activePatients: number;
+  totalDoctors: number;
+  totalAdmins: number;
+  totalReadingsLogged: number;
+  totalMedicationsTracked: number;
+  suspendedUsers: number;
+}
+
 
 export interface GlucoseReading {
   id: string;

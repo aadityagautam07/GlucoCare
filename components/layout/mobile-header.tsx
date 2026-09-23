@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { HeartPulse, Plus, User } from "lucide-react";
+import { HeartPulse, Plus, User, ShieldCheck } from "lucide-react";
 import { UserProfile } from "@/types";
 
 interface MobileHeaderProps {
@@ -23,6 +23,17 @@ export function MobileHeader({ user, onOpenQuickAction }: MobileHeaderProps) {
       </Link>
 
       <div className="flex items-center gap-2">
+        {user?.role === "admin" && (
+          <Link
+            href="/admin"
+            className="flex h-8 items-center gap-1 px-2 rounded-lg bg-purple-100 text-purple-800 text-[11px] font-bold hover:bg-purple-200 transition-colors"
+            title="Admin Portal"
+          >
+            <ShieldCheck className="h-3.5 w-3.5 text-purple-700" />
+            <span>Admin</span>
+          </Link>
+        )}
+
         <button
           onClick={onOpenQuickAction}
           className="flex h-8 items-center gap-1 px-2.5 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors"
