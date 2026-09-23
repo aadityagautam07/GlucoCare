@@ -1,0 +1,149 @@
+"use client";
+
+import * as React from "react";
+import { Plus, Footprints, Clock, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ActivityBarChart } from "./activity-bar-chart";
+import { AddActivityDialog } from "./add-activity-dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Activity } from "@/types";
+import { formatDate, formatTime } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+interface ActivityViewProps {
+  activities: Activity[];
+}
+
+export function ActivityView({ activities }: ActivityViewProps) {
+  const router = useRouter();
+  const [addModalOpen, setAddModalOpen] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<Activity | null>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const handleRefresh = () => {
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/activities/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Failed to delete activity");
+      toast.success("Activity log deleted");
+      setDeleteTarget(null);
+      handleRefresh();
+    } catch {
+      toast.error("Failed to delete activity");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Physical Activity & Exercise
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Track walks, workouts, and daily movement to observe physical activity patterns.
+          </p>
+        </div>
+
+        <Button onClick={() => setAddModalOpen(true)} className="shadow-sm">
+          <Plus className="h-4 w-4" />
+          <span>Log Activity</span>
+        </Button>
+      </div>
+
+      {/* Weekly Activity Chart */}
+      <ActivityBarChart activities={activities} />
+
+      {/* Activity Log List */}
+      <div className="space-y-3">
+        <h2 className="text-lg font-bold text-slate-900">
+          Activity History
+        </h2>
+
+        {activities.length === 0 ? (
+          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-sm text-slate-500">
+            No activities logged yet. Record your daily walks or exercises.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {activities.map((act) => (
+              <Card
+                key={act.id}
+                className="shadow-xs hover:border-emerald-200 transition-all border-slate-200/80"
+              >
+                <CardContent className="p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                      <Footprints className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900 capitalize">
+                          {act.activityType}
+                        </span>
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDate(act.date)} at {formatTime(act.time)}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-600">
+                        <span className="font-semibold text-emerald-700">
+                          {act.durationMinutes} minutes
+                        </span>
+                        {act.steps && (
+                          <span>{act.steps.toLocaleString()} steps</span>
+                        )}
+                        {act.notes && (
+                          <span className="text-slate-400 italic">
+                            &quot;{act.notes}&quot;
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setDeleteTarget(act)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    title="Delete activity"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AddActivityDialog
+        open={addModalOpen}
+        onOpenChange={setAddModalOpen}
+        onSuccess={handleRefresh}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete Activity Entry"
+        description="Are you sure you want to delete this recorded activity?"
+        confirmLabel="Delete Activity"
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
+    </div>
+  );
+}
+
