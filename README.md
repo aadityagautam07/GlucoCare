@@ -1,36 +1,102 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🩺 GlucoCare — Modern Diabetes Management Web Application
 
-## Getting Started
+> **Help a diabetes patient understand and manage their day without overwhelming them with medical information.**
 
-First, run the development server:
+GlucoCare is a production-quality, responsive healthcare SaaS web application built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS**, and **shadcn/ui-inspired** components. Designed around calm, trustworthy, and non-diagnostic principles to support patients managing Type 2 diabetes.
+
+---
+
+## 👨‍💻 Developed By
+
+**Aaditya Gautam**  
+*Lead Full-Stack Developer & UX Designer*
+
+- 🐙 **GitHub**: [@aadityagautam07](https://github.com/aadityagautam07)
+- 💼 **LinkedIn**: [Aaditya Gautam](https://www.linkedin.com/in/aadityagautam07/)
+- 📸 **Instagram**: [@aadityagautam__](https://instagram.com/aadityagautam__)
+
+---
+
+## ✨ Features
+
+- **📊 Comprehensive Dashboard**: Answers *"How am I doing today?"* with latest blood glucose status, 4 key daily metrics, interactive Recharts 7D/14D/30D/90D trend graph, and a daily self-care plan checklist.
+- **🩸 Glucose Tracking**: Log and filter readings by context (*Fasting*, *Before Meal*, *After Meal*, *Bedtime*, *Random*) with instant target range checks and unit toggles (`mg/dL` and `mmol/L`).
+- **💊 Medication Management**: Prescription cards displaying instructions, schedules, and active dose logging (*Taken*, *Skipped*, *Missed*).
+- **🥗 Meals & Monthly Ration Inventory**:
+  - Daily food diary tracking carbs and calories.
+  - **Monthly Ration & Pantry Tracker**: Track household staple food supplies (Oats, Rice, Lentils, Nuts, Healthy Oils) with low-stock alerts.
+  - **Ration-Based Meal Planner**: Pre-configured diabetic recipes matching in-stock rations with 1-click automatic ingredient deduction.
+- **🏃 Physical Activity**: Activity logs and weekly active minutes Recharts bar chart with daily exercise benchmarks.
+- **💡 Observational Health Insights**: Comparative trend summaries without making autonomous diagnoses.
+- **🩺 Doctor Consultations & Telehealth**: Appointment scheduler for clinic check-ups and virtual visits.
+- **📄 Printable Clinical Reports**: Export 7, 14, 30, or 90-day clinical summaries with estimated A1c and Time In Range % for endocrinologists.
+- **🔐 Privacy & Dual-Mode Database**: Supports both live **MongoDB Atlas** and instant **zero-setup in-memory fallback** with pre-seeded 14-day demo data (*Eleanor Brooks*).
+
+---
+
+## 🛠️ Technology Stack
+
+- **Framework**: [Next.js 16](https://nextjs.org) (App Router, Turbopack, React 19)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Components**: Accessible dialogs, drawers, and form primitives
+- **Icons**: Lucide React
+- **Charts**: Recharts
+- **Database**: MongoDB & Mongoose (with in-memory demo fallback)
+- **Validation**: Zod & React Hook Form
+- **Authentication**: Session cookies via `jose` (JWT) & `bcryptjs`
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/aadityagautam07/glucocare.git
+cd glucocare
+npm install
+```
+
+### 2. Configure Environment
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+*(Note: GlucoCare includes an automatic in-memory fallback, so you can run the app immediately even without a database configured!)*
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser. Click **"Explore as Demo Patient"** to test immediately.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🌐 Deploy to Vercel
 
-## Learn More
+The easiest way to deploy GlucoCare is with [Vercel](https://vercel.com):
 
-To learn more about Next.js, take a look at the following resources:
+1. Push this repository to your GitHub account.
+2. Import the project in the [Vercel Dashboard](https://vercel.com/new).
+3. Add the following Environment Variables in the project settings:
+   - `AUTH_SECRET`: A secure random 256-bit string (e.g. `openssl rand -base64 32`)
+   - `MONGODB_URI`: Your MongoDB Atlas connection string (optional; demo mode will activate if omitted)
+4. Click **Deploy**!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ⚖️ Medical Safety Disclaimer
 
-## Deploy on Vercel
+GlucoCare is an organizational self-care tracking platform. It does not provide medical diagnoses, treatment plans, or autonomous medication/insulin dosage adjustments. Always consult your qualified healthcare professional regarding clinical decisions.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📄 License
+
+Created by [Aaditya Gautam](https://github.com/aadityagautam07). Open for personal, educational, and healthcare exploration.

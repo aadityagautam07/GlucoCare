@@ -16,6 +16,7 @@ import { Select } from "@/components/ui/select";
 import { UserProfile, GlucoseUnit } from "@/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { CreatorCard } from "@/components/common/creator-credit";
 
 interface SettingsViewProps {
   user: UserProfile;
@@ -201,6 +202,11 @@ export function SettingsView({ user }: SettingsViewProps) {
             </div>
           </CardContent>
         </Card>
+
+        {/* Creator & Developer Credits */}
+        <div className="pt-2">
+          <CreatorCard />
+        </div>
 
         {/* Save button */}
         <div className="flex justify-end">

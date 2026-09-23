@@ -20,6 +20,12 @@ import {
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types";
 import { toast } from "sonner";
+import {
+  CREATOR_INFO,
+  GithubIcon,
+  LinkedinIcon,
+  InstagramIcon,
+} from "@/components/common/creator-credit";
 
 interface AppSidebarProps {
   user?: UserProfile | null;
@@ -146,6 +152,40 @@ export function AppSidebar({ user }: AppSidebarProps) {
               );
             })}
           </nav>
+        </div>
+      </div>
+
+      {/* Developer Credit */}
+      <div className="px-4 py-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 bg-slate-50/40">
+        <span>By <strong className="text-slate-700">Aaditya Gautam</strong></span>
+        <div className="flex items-center gap-2">
+          <a
+            href={CREATOR_INFO.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-slate-800 transition-colors"
+            title="GitHub"
+          >
+            <GithubIcon className="h-3 w-3" />
+          </a>
+          <a
+            href={CREATOR_INFO.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-sky-600 transition-colors"
+            title="LinkedIn"
+          >
+            <LinkedinIcon className="h-3 w-3" />
+          </a>
+          <a
+            href={CREATOR_INFO.instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-slate-400 hover:text-pink-600 transition-colors"
+            title="Instagram"
+          >
+            <InstagramIcon className="h-3 w-3" />
+          </a>
         </div>
       </div>
 
