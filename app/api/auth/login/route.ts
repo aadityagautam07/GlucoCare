@@ -44,6 +44,8 @@ export async function POST(req: Request) {
       userId: userWithHash.id,
       email: userWithHash.email,
       name: userWithHash.name,
+      role: userWithHash.role || "patient",
+      status: userWithHash.status || "active",
       diabetesType: userWithHash.diabetesType,
       glucoseUnit: userWithHash.glucoseUnit,
     });
@@ -54,6 +56,9 @@ export async function POST(req: Request) {
         id: userWithHash.id,
         name: userWithHash.name,
         email: userWithHash.email,
+        role: userWithHash.role || "patient",
+        status: userWithHash.status || "active",
+        permissions: userWithHash.permissions,
         diabetesType: userWithHash.diabetesType,
         glucoseUnit: userWithHash.glucoseUnit,
       },

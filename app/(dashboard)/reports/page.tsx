@@ -1,11 +1,13 @@
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
-import { demoUser } from "@/lib/seed-data";
 import { ReportsView } from "@/components/reports/reports-view";
 
 export default async function ReportsPage() {
-  const sessionUser = await getSessionUser();
-  const user = sessionUser || demoUser;
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
 
   const initialReadings = memoryDb.getGlucoseReadings(user.id);
   const medications = memoryDb.getMedications(user.id);

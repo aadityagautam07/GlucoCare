@@ -1,11 +1,13 @@
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
-import { demoUser } from "@/lib/seed-data";
 import { InsightCards } from "@/components/insights/insight-cards";
 
 export default async function InsightsPage() {
-  const sessionUser = await getSessionUser();
-  const user = sessionUser || demoUser;
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
 
   const glucoseReadings = memoryDb.getGlucoseReadings(user.id);
   const medicationLogs = memoryDb.getMedicationLogs(user.id);

@@ -121,7 +121,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
                 <Link href="/login" className="w-full sm:w-auto">
                   <Button size="lg" className="w-full sm:w-auto bg-indigo-700 hover:bg-indigo-800 text-white shadow-md font-semibold gap-2">
-                    <span>Try Demo Patient</span>
+                    <span>Sign In to Dashboard</span>
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -439,7 +439,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link href="/login">
               <Button size="lg" className="bg-white text-indigo-900 hover:bg-indigo-50 font-bold shadow-md">
-                Launch Interactive Demo
+                Sign In to Account
               </Button>
             </Link>
             <Link href="/register">

@@ -108,6 +108,24 @@ function getMemoryStore(): InMemStore {
       });
     }
 
+    // Load local admin accounts created via CLI if present
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const fs = require("fs");
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const path = require("path");
+      const adminStorePath = path.resolve(process.cwd(), "lib/admin-store.json");
+      if (fs.existsSync(adminStorePath)) {
+        const localAdmins = JSON.parse(fs.readFileSync(adminStorePath, "utf-8"));
+        for (const a of localAdmins) {
+          userMap.set(a.id, a);
+        }
+      }
+    } catch {
+      // Ignore if not present
+    }
+
+
     global.memoryStore = {
       users: userMap,
       glucose: [...demoGlucoseReadings],

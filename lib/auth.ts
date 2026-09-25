@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { memoryDb } from "./db";
 import { UserProfile, UserRole, UserStatus, UserPermissions } from "@/types";
-import { DEMO_USER_ID, DEMO_ADMIN_ID, demoUser, demoAdminUser, DEFAULT_PATIENT_PERMISSIONS } from "./seed-data";
+import { DEFAULT_PATIENT_PERMISSIONS } from "./seed-data";
 
 const JWT_SECRET_STRING =
   process.env.AUTH_SECRET || "glucocare-super-secret-production-grade-key-2025-health";
@@ -58,16 +58,6 @@ export async function getSessionUser(): Promise<UserProfile | null> {
     const payload = await verifySessionToken(token);
     if (!payload?.userId) {
       return null;
-    }
-
-    if (payload.userId === DEMO_ADMIN_ID) {
-      const user = memoryDb.getUserById(DEMO_ADMIN_ID);
-      return user || demoAdminUser;
-    }
-
-    if (payload.userId === DEMO_USER_ID) {
-      const user = memoryDb.getUserById(DEMO_USER_ID);
-      return user || demoUser;
     }
 
     const user = memoryDb.getUserById(payload.userId);

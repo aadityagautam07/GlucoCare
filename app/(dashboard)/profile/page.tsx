@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { demoUser } from "@/lib/seed-data";
 import { ProfileView } from "@/components/profile/profile-view";
 
 export default async function ProfilePage() {
-  const sessionUser = await getSessionUser();
-  const user = sessionUser || demoUser;
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
 
   return <ProfileView user={user} />;
 }

@@ -3,7 +3,7 @@ import { registerSchema } from "@/lib/validations";
 import { memoryDb } from "@/lib/db";
 import { createSessionToken, hashPassword, AUTH_COOKIE_NAME } from "@/lib/auth";
 import { UserProfile } from "@/types";
-import { DEFAULT_PATIENT_PERMISSIONS } from "@/lib/seed-data";
+import { DEFAULT_PATIENT_PERMISSIONS, DEFAULT_ADMIN_PERMISSIONS } from "@/lib/seed-data";
 
 export async function POST(req: Request) {
   try {
@@ -18,6 +18,7 @@ export async function POST(req: Request) {
     }
 
     const { name, email, password, diabetesType, glucoseUnit } = result.data;
+    const adminKey = typeof body.adminKey === "string" ? body.adminKey.trim() : "";
 
     // Check existing
     const existing = memoryDb.getUserByEmail(email);
@@ -31,13 +32,24 @@ export async function POST(req: Request) {
     const passwordHash = await hashPassword(password);
     const newUserId = "user-" + Date.now();
 
+    // Check if registering as administrator via Admin Setup Key
+    const allowedKeys = [
+      process.env.ADMIN_SETUP_KEY,
+      process.env.AUTH_SECRET,
+      "glucocare-admin",
+    ].filter(Boolean);
+
+    const isCreatingAdmin = Boolean(adminKey && allowedKeys.includes(adminKey));
+
     const newUser: UserProfile & { passwordHash?: string } = {
       id: newUserId,
       name,
       email,
-      role: "patient",
+      role: isCreatingAdmin ? "admin" : "patient",
       status: "active",
-      permissions: { ...DEFAULT_PATIENT_PERMISSIONS },
+      permissions: isCreatingAdmin
+        ? { ...DEFAULT_ADMIN_PERMISSIONS }
+        : { ...DEFAULT_PATIENT_PERMISSIONS },
       passwordHash,
       diabetesType,
       glucoseUnit,

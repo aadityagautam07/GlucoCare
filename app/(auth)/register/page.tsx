@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartPulse, Mail, Lock, User } from "lucide-react";
+import { HeartPulse, Mail, Lock, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,8 @@ export default function RegisterPage() {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [adminKey, setAdminKey] = React.useState("");
+  const [showAdminField, setShowAdminField] = React.useState(false);
   const [diabetesType, setDiabetesType] = React.useState<DiabetesType>("Type 2");
   const [glucoseUnit, setGlucoseUnit] = React.useState<GlucoseUnit>("mg/dL");
   const [isLoading, setIsLoading] = React.useState(false);
@@ -34,6 +36,7 @@ export default function RegisterPage() {
           password,
           diabetesType,
           glucoseUnit,
+          adminKey: adminKey.trim() || undefined,
         }),
       });
 
@@ -42,10 +45,17 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      toast.success("Account created successfully!", {
-        description: `Welcome to GlucoCare, ${data.user.name}`,
-      });
-      router.push("/dashboard");
+      if (data.user.role === "admin") {
+        toast.success("Administrator Account Created!", {
+          description: `Welcome Administrator ${data.user.name}`,
+        });
+        router.push("/admin");
+      } else {
+        toast.success("Account created successfully!", {
+          description: `Welcome to GlucoCare, ${data.user.name}`,
+        });
+        router.push("/dashboard");
+      }
       router.refresh();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to register";
@@ -54,6 +64,7 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50">
@@ -159,6 +170,37 @@ export default function RegisterPage() {
                     <option value="mmol/L">mmol/L</option>
                   </Select>
                 </div>
+              </div>
+
+              {/* Optional Admin Setup Key */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowAdminField((prev) => !prev)}
+                  className="text-[11px] font-semibold text-purple-700 hover:text-purple-800 flex items-center gap-1 transition-colors"
+                >
+                  <Shield className="w-3 h-3 text-purple-600" />
+                  <span>{showAdminField ? "Hide Admin Setup Key" : "Have an Admin Setup Key?"}</span>
+                </button>
+
+                {showAdminField && (
+                  <div className="mt-2 p-3 rounded-xl bg-purple-50/70 border border-purple-200/80 space-y-1.5">
+                    <Label htmlFor="reg-adminkey" className="text-xs text-purple-900 font-semibold">
+                      Admin Setup Key
+                    </Label>
+                    <Input
+                      id="reg-adminkey"
+                      type="password"
+                      placeholder="Enter setup key (or your AUTH_SECRET)"
+                      value={adminKey}
+                      onChange={(e) => setAdminKey(e.target.value)}
+                      className="bg-white border-purple-200 text-xs text-purple-950"
+                    />
+                    <p className="text-[10px] text-purple-700">
+                      Configures this account with master administrative rights across all users and features.
+                    </p>
+                  </div>
+                )}
               </div>
             </CardContent>
 

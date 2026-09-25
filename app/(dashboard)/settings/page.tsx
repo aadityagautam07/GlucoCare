@@ -1,10 +1,12 @@
+import { redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
-import { demoUser } from "@/lib/seed-data";
 import { SettingsView } from "@/components/settings/settings-view";
 
 export default async function SettingsPage() {
-  const sessionUser = await getSessionUser();
-  const user = sessionUser || demoUser;
+  const user = await getSessionUser();
+  if (!user) {
+    redirect("/login");
+  }
 
   return <SettingsView user={user} />;
 }

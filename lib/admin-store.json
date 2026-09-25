@@ -1,0 +1,33 @@
+[
+  {
+    "id": "admin-1790356872805",
+    "name": "Aaditya Gautam",
+    "email": "aaditya@glucocare.com",
+    "role": "admin",
+    "status": "active",
+    "permissions": {
+      "canLogGlucose": true,
+      "canManageMedications": true,
+      "canLogMeals": true,
+      "canManageRation": true,
+      "canLogActivity": true,
+      "canManageAppointments": true,
+      "canViewReports": true,
+      "canExportData": true
+    },
+    "passwordHash": "$2b$10$V.I4ScyYRSaXXDirw0QR.ut0KJiqOR0Q/ZHZsAeFT5.Rxt10DGNfm",
+    "diabetesType": "Other",
+    "glucoseUnit": "mg/dL",
+    "targetRange": {
+      "fastingMin": 70,
+      "fastingMax": 130,
+      "postMealMax": 180
+    },
+    "notifications": {
+      "medicationReminders": true,
+      "glucoseReminders": true,
+      "appointmentReminders": true
+    },
+    "createdAt": "2026-09-25T17:21:12.805Z"
+  }
+]
