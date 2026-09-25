@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { mealSchema, MealInput } from "@/lib/validations";
-import { RationItem, MealRationIngredient } from "@/types";
+import { Meal, RationItem, MealRationIngredient } from "@/types";
 import { toast } from "sonner";
 import { Utensils, Package, Plus, X, AlertCircle } from "lucide-react";
 

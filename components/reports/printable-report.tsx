@@ -43,12 +43,12 @@ export function PrintableReport({
   return (
     <div className="space-y-6">
       {/* Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-xs no-print">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs no-print">
         <div>
-          <h3 className="text-sm font-bold text-slate-900">
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">
             Clinical Health Summary Report ({reportData.periodDays} Days)
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             Formatted for consultation review with your primary care provider or endocrinologist.
           </p>
         </div>
@@ -66,93 +66,93 @@ export function PrintableReport({
       </div>
 
       {/* Printable Paper Document */}
-      <div className="bg-white p-8 md:p-12 rounded-3xl border border-slate-200 shadow-sm print:p-0 print:border-none print:shadow-none space-y-8 max-w-4xl mx-auto">
+      <div className="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm print:p-0 print:border-none print:shadow-none print:bg-white print:text-black space-y-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-700 to-teal-600 text-white shadow-xs">
               <HeartPulse className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                Gluco<span className="text-teal-600">Care</span> Health Summary
+              <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                Gluco<span className="text-teal-600 dark:text-teal-400">Care</span> Health Summary
               </h1>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Patient Self-Recorded Tracking Log
               </p>
             </div>
           </div>
 
-          <div className="text-left sm:text-right text-xs text-slate-600 space-y-1">
+          <div className="text-left sm:text-right text-xs text-slate-600 dark:text-slate-300 space-y-1">
             <p>
-              <span className="font-semibold text-slate-800">Patient:</span> {user.name}
+              <span className="font-semibold text-slate-800 dark:text-white">Patient:</span> {user.name}
             </p>
             <p>
-              <span className="font-semibold text-slate-800">Diagnosis:</span> {user.diabetesType}
+              <span className="font-semibold text-slate-800 dark:text-white">Diagnosis:</span> {user.diabetesType}
             </p>
             <p>
-              <span className="font-semibold text-slate-800">Report Window:</span> Last {reportData.periodDays} Days
+              <span className="font-semibold text-slate-800 dark:text-white">Report Window:</span> Last {reportData.periodDays} Days
             </p>
             <p>
-              <span className="font-semibold text-slate-800">Generated:</span> {new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+              <span className="font-semibold text-slate-800 dark:text-white">Generated:</span> {new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
             </p>
           </div>
         </div>
 
         {/* Mandatory Clinical Disclaimer */}
-        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
-          <strong className="text-slate-800">Notice for Healthcare Professional:</strong> This document contains self-reported observational information recorded by the patient through the GlucoCare application. It does not replace laboratory venous blood testing or clinical diagnosis.
+        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          <strong className="text-slate-800 dark:text-white">Notice for Healthcare Professional:</strong> This document contains self-reported observational information recorded by the patient through the GlucoCare application. It does not replace laboratory venous blood testing or clinical diagnosis.
         </div>
 
         {/* Summary Metric Grid */}
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
             Glucose Metrics Overview
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-xs text-slate-500 block">Average Glucose</span>
-              <span className="text-2xl font-black text-slate-900 mt-1 block">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700">
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Average Glucose</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white mt-1 block">
                 {reportData.totalReadings > 0 ? formatGlucoseValue(reportData.averageGlucose, unit) : "—"}{" "}
-                <span className="text-xs font-normal text-slate-500">{unit}</span>
+                <span className="text-xs font-normal text-slate-500 dark:text-slate-400">{unit}</span>
               </span>
-              <span className="text-[11px] text-slate-400">Target: 70–180 {unit}</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">Target: 70–180 {unit}</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-xs text-slate-500 block">Estimated A1c</span>
-              <span className="text-2xl font-black text-indigo-900 mt-1 block">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700">
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Estimated A1c</span>
+              <span className="text-2xl font-black text-indigo-900 dark:text-indigo-300 mt-1 block">
                 {reportData.totalReadings > 0 ? `${reportData.estimatedA1c}%` : "—"}
               </span>
-              <span className="text-[11px] text-slate-400">eAG conversion</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">eAG conversion</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-xs text-slate-500 block">Time in Target Range</span>
-              <span className="text-2xl font-black text-emerald-700 mt-1 block">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700">
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Time in Target Range</span>
+              <span className="text-2xl font-black text-emerald-700 dark:text-emerald-400 mt-1 block">
                 {reportData.timeInRangePct}%
               </span>
-              <span className="text-[11px] text-slate-400">Above: {reportData.aboveRangePct}% | Below: {reportData.belowRangePct}%</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">Above: {reportData.aboveRangePct}% | Below: {reportData.belowRangePct}%</span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <span className="text-xs text-slate-500 block">Logged Checks</span>
-              <span className="text-2xl font-black text-slate-900 mt-1 block">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-700">
+              <span className="text-xs text-slate-500 dark:text-slate-400 block">Logged Checks</span>
+              <span className="text-2xl font-black text-slate-900 dark:text-white mt-1 block">
                 {reportData.totalReadings}
               </span>
-              <span className="text-[11px] text-slate-400">Checks in period</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">Checks in period</span>
             </div>
           </div>
         </div>
 
         {/* Medication Regimen & Adherence */}
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
             Active Medications & Logged Adherence ({reportData.medicationAdherencePct}% adherence)
           </h3>
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="p-3">Medication</th>
                   <th className="p-3">Dosage</th>
@@ -161,14 +161,14 @@ export function PrintableReport({
                   <th className="p-3">Instructions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {medications.map((m) => (
                   <tr key={m.id}>
-                    <td className="p-3 font-bold text-slate-900">{m.name}</td>
-                    <td className="p-3 text-slate-700">{m.dosage}</td>
-                    <td className="p-3 text-slate-700">{m.frequency}</td>
-                    <td className="p-3 text-slate-700 capitalize">{m.schedule}</td>
-                    <td className="p-3 text-slate-500">{m.instructions || "—"}</td>
+                    <td className="p-3 font-bold text-slate-900 dark:text-white">{m.name}</td>
+                    <td className="p-3 text-slate-700 dark:text-slate-300">{m.dosage}</td>
+                    <td className="p-3 text-slate-700 dark:text-slate-300">{m.frequency}</td>
+                    <td className="p-3 text-slate-700 dark:text-slate-300 capitalize">{m.schedule}</td>
+                    <td className="p-3 text-slate-500 dark:text-slate-400">{m.instructions || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -178,36 +178,36 @@ export function PrintableReport({
 
         {/* Activity & Meals Summary */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 dark:bg-slate-800/60">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
               Physical Activity Summary
             </h4>
-            <div className="space-y-1 text-xs text-slate-700">
+            <div className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
               <p>
-                <span className="font-semibold">Total active duration:</span>{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">Total active duration:</span>{" "}
                 {reportData.totalActivityMinutes} minutes
               </p>
               <p>
-                <span className="font-semibold">Total recorded steps:</span>{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">Total recorded steps:</span>{" "}
                 {reportData.totalSteps.toLocaleString()} steps
               </p>
               <p>
-                <span className="font-semibold">Daily active average:</span>{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">Daily active average:</span>{" "}
                 {Math.round(reportData.totalActivityMinutes / reportData.periodDays)} minutes/day
               </p>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/50">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 dark:bg-slate-800/60">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
               Meals & Nutrition Summary
             </h4>
-            <div className="space-y-1 text-xs text-slate-700">
+            <div className="space-y-1 text-xs text-slate-700 dark:text-slate-300">
               <p>
-                <span className="font-semibold">Total meals logged:</span>{" "}
+                <span className="font-semibold text-slate-900 dark:text-white">Total meals logged:</span>{" "}
                 {reportData.totalMeals} meals
               </p>
-              <p className="text-slate-500 leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
                 Patient maintains food diary recording meal types and carbohydrate content for correlation analysis.
               </p>
             </div>
@@ -216,12 +216,12 @@ export function PrintableReport({
 
         {/* Recent Glucose Log Entries */}
         <div>
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-3">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
             Recent Readings Log ({Math.min(readings.length, 12)} of {readings.length} shown)
           </h3>
-          <div className="rounded-xl border border-slate-200 overflow-hidden">
+          <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+              <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
                 <tr>
                   <th className="p-2.5">Date</th>
                   <th className="p-2.5">Time</th>
@@ -230,14 +230,14 @@ export function PrintableReport({
                   <th className="p-2.5">Notes</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {readings.slice(0, 12).map((r) => (
                   <tr key={r.id}>
-                    <td className="p-2.5 font-medium text-slate-800">{formatDate(r.date)}</td>
-                    <td className="p-2.5 text-slate-600">{formatTime(r.time)}</td>
-                    <td className="p-2.5 font-bold text-slate-900">{formatGlucoseValue(r.value, unit)}</td>
-                    <td className="p-2.5 capitalize text-slate-700">{r.context.replace("_", " ")}</td>
-                    <td className="p-2.5 text-slate-500">{r.notes || "—"}</td>
+                    <td className="p-2.5 font-medium text-slate-800 dark:text-slate-200">{formatDate(r.date)}</td>
+                    <td className="p-2.5 text-slate-600 dark:text-slate-300">{formatTime(r.time)}</td>
+                    <td className="p-2.5 font-bold text-slate-900 dark:text-white">{formatGlucoseValue(r.value, unit)}</td>
+                    <td className="p-2.5 capitalize text-slate-700 dark:text-slate-300">{r.context.replace("_", " ")}</td>
+                    <td className="p-2.5 text-slate-500 dark:text-slate-400">{r.notes || "—"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -246,7 +246,7 @@ export function PrintableReport({
         </div>
 
         {/* Footer */}
-        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+        <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 dark:text-slate-500 gap-2">
           <span>Generated with GlucoCare • Modern Diabetes Management Platform</span>
           <span>Page 1 of 1</span>
         </div>

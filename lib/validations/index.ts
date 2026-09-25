@@ -186,4 +186,17 @@ export const labReportSchema = z.object({
 
 export type LabReportInput = z.infer<typeof labReportSchema>;
 
+export const appleFitnessLogSchema = z.object({
+  date: z.string().min(1, "Date is required"),
+  calories: z.number().min(0, "Active calories must be 0 or more"),
+  stepCount: z.number().int().min(0, "Steps must be 0 or more"),
+  stepDistance: z.number().min(0, "Distance must be 0 or more"),
+  caloriesGoal: z.number().min(50).optional().default(500),
+  stepCountGoal: z.number().min(500).optional().default(10000),
+  stepDistanceGoal: z.number().min(0.5).optional().default(5.0),
+  notes: z.string().max(300).optional(),
+});
+
+export type AppleFitnessLogInput = z.infer<typeof appleFitnessLogSchema>;
+
 

@@ -266,7 +266,7 @@ export function AppointmentsView({ appointments }: AppointmentsViewProps) {
         </h2>
 
         {upcomingList.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-sm text-slate-500">
+          <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-500 dark:text-slate-400">
             No upcoming appointments scheduled.
           </div>
         ) : (
@@ -274,39 +274,39 @@ export function AppointmentsView({ appointments }: AppointmentsViewProps) {
             {upcomingList.map((app) => (
               <Card
                 key={app.id}
-                className="shadow-xs hover:border-indigo-200 transition-all border-slate-200/80"
+                className="shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
               >
                 <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="h-11 w-11 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="h-11 w-11 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
                       <Calendar className="h-5 w-5" />
                     </div>
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-bold text-slate-900">
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
                           {app.title}
                         </h3>
                         {app.isVirtual && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-full border border-teal-200 dark:border-teal-800">
                             <Video className="h-3 w-3" /> Telehealth
                           </span>
                         )}
 
                         {/* Alarm Badge */}
                         {app.reminderAlarm && app.reminderAlarm !== "none" ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-full border border-indigo-200">
-                            <Bell className="h-3 w-3 text-indigo-600 animate-pulse" />
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2.5 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
+                            <Bell className="h-3 w-3 text-indigo-600 dark:text-indigo-400 animate-pulse" />
                             Alarm: {getAlarmLabel(app.reminderAlarm)}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200">
-                            <Bell className="h-3 w-3 text-slate-300" />
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 bg-slate-50 dark:bg-slate-800 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                            <Bell className="h-3 w-3 text-slate-300 dark:text-slate-600" />
                             No alarm
                           </span>
                         )}
                       </div>
 
-                      <p className="text-xs font-semibold text-slate-700 mt-1">
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1">
                         {app.doctorName}{" "}
                         {app.specialty && (
                           <span className="text-slate-400 font-normal">

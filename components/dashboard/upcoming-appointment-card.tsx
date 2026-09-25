@@ -43,28 +43,28 @@ export function UpcomingAppointmentCard({
       </CardHeader>
 
       <CardContent className="pt-2">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white border border-slate-200/80 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 shadow-xs">
           <div>
-            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
               <span>{upcoming.title}</span>
               {upcoming.reminderAlarm && upcoming.reminderAlarm !== "none" && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-800">
                   <span className="h-1.5 w-1.5 rounded-full bg-indigo-600 animate-pulse" />
                   Alarm on
                 </span>
               )}
             </h4>
-            <p className="text-xs text-slate-600 font-medium mt-0.5">
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium mt-0.5">
               {upcoming.doctorName} {upcoming.specialty && `• ${upcoming.specialty}`}
             </p>
-            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500">
-              <span className="font-semibold text-indigo-900">
+            <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-semibold text-indigo-900 dark:text-indigo-300">
                 {formatDate(upcoming.date)} at {formatTime(upcoming.time)}
               </span>
               <span className="flex items-center gap-1">
                 {upcoming.isVirtual ? (
                   <>
-                    <Video className="h-3.5 w-3.5 text-teal-600" />
+                    <Video className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
                     Telehealth consultation
                   </>
                 ) : (

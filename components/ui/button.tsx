@@ -16,11 +16,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       default:
         "bg-indigo-700 text-white shadow-sm hover:bg-indigo-800 active:scale-[0.98]",
       secondary:
-        "bg-slate-100 text-slate-800 hover:bg-slate-200 active:scale-[0.98]",
+        "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-[0.98]",
       outline:
-        "border border-slate-300 bg-white text-slate-700 shadow-sm hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98]",
+        "border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white active:scale-[0.98]",
       ghost:
-        "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+        "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white",
       destructive:
         "bg-rose-600 text-white shadow-sm hover:bg-rose-700 active:scale-[0.98]",
       link:

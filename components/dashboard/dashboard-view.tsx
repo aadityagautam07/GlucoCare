@@ -14,6 +14,7 @@ import { AddMealDialog } from "@/components/meals/add-meal-dialog";
 import { AddActivityDialog } from "@/components/activity/add-activity-dialog";
 import { SmartMealSuggester } from "@/components/meals/smart-meal-suggester";
 import { AppleFitnessRings } from "@/components/activity/apple-fitness-rings";
+import { LogAppleFitnessDialog } from "@/components/activity/log-apple-fitness-dialog";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { MealInput } from "@/lib/validations";
 import {
@@ -25,6 +26,7 @@ import {
   Activity,
   Appointment,
   RationItem,
+  AppleFitnessDayLog,
 } from "@/types";
 import { useRouter } from "next/navigation";
 
@@ -37,6 +39,7 @@ interface DashboardViewProps {
   activities: Activity[];
   appointments: Appointment[];
   rations?: RationItem[];
+  appleFitnessLogs?: AppleFitnessDayLog[];
 }
 
 export function DashboardView({
@@ -48,6 +51,7 @@ export function DashboardView({
   activities,
   appointments,
   rations = [],
+  appleFitnessLogs = [],
 }: DashboardViewProps) {
   const router = useRouter();
 
@@ -57,18 +61,21 @@ export function DashboardView({
   const [medLogList, setMedLogList] = React.useState<MedicationLog[]>(medicationLogs);
   const [mealList, setMealList] = React.useState<Meal[]>(meals);
   const [actList, setActList] = React.useState<Activity[]>(activities);
+  const [fitnessLogs, setFitnessLogs] = React.useState<AppleFitnessDayLog[]>(appleFitnessLogs);
 
   React.useEffect(() => { setGlucoseList(glucoseReadings); }, [glucoseReadings]);
   React.useEffect(() => { setMedList(medications); }, [medications]);
   React.useEffect(() => { setMedLogList(medicationLogs); }, [medicationLogs]);
   React.useEffect(() => { setMealList(meals); }, [meals]);
   React.useEffect(() => { setActList(activities); }, [activities]);
+  React.useEffect(() => { setFitnessLogs(appleFitnessLogs); }, [appleFitnessLogs]);
 
   const [addGlucoseOpen, setAddGlucoseOpen] = React.useState(false);
   const [addMedOpen, setAddMedOpen] = React.useState(false);
   const [addMealOpen, setAddMealOpen] = React.useState(false);
   const [prefilledMeal, setPrefilledMeal] = React.useState<Partial<MealInput> | undefined>(undefined);
   const [addActOpen, setAddActOpen] = React.useState(false);
+  const [logFitnessOpen, setLogFitnessOpen] = React.useState(false);
 
   const todayStr = new Date().toISOString().split("T")[0];
   const todayReadings = glucoseList.filter((g) => g.date === todayStr);
@@ -79,6 +86,7 @@ export function DashboardView({
   const todaySteps = todayActs.reduce((sum, a) => sum + (a.steps || 0), 0);
   const todayCals = Math.round(todayMins * 5.5 + todaySteps * 0.04);
   const todayMedLogs = medLogList.filter((l) => l.scheduledAt.startsWith(todayStr));
+  const todayFitnessLog = fitnessLogs.find((f) => f.date === todayStr) || fitnessLogs[0] || null;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -89,12 +97,13 @@ export function DashboardView({
 
   const handleRefresh = React.useCallback(async () => {
     try {
-      const [gluRes, mealRes, actRes, medRes, logRes] = await Promise.all([
+      const [gluRes, mealRes, actRes, medRes, logRes, fitRes] = await Promise.all([
         fetch("/api/glucose"),
         fetch("/api/meals"),
         fetch("/api/activities"),
         fetch("/api/medications"),
         fetch("/api/medication-logs"),
+        fetch("/api/apple-fitness"),
       ]);
       if (gluRes.ok) {
         const d = await gluRes.json();
@@ -115,6 +124,10 @@ export function DashboardView({
       if (logRes.ok) {
         const d = await logRes.json();
         if (Array.isArray(d.logs)) setMedLogList(d.logs);
+      }
+      if (fitRes.ok) {
+        const d = await fitRes.json();
+        if (Array.isArray(d.logs)) setFitnessLogs(d.logs);
       }
     } catch {
       // quiet fallback
@@ -201,9 +214,14 @@ export function DashboardView({
         {/* Right Column (5 cols): Apple Fitness Rings + Today's Plan + Upcoming Appointment */}
         <div className="lg:col-span-5 space-y-6">
           <AppleFitnessRings
-            activeCalories={todayCals || 380}
-            exerciseMinutes={todayMins || 25}
-            totalSteps={todaySteps || 6400}
+            calories={todayFitnessLog?.calories ?? 0}
+            caloriesGoal={todayFitnessLog?.caloriesGoal ?? 500}
+            stepCount={todayFitnessLog?.stepCount ?? 0}
+            stepCountGoal={todayFitnessLog?.stepCountGoal ?? 10000}
+            stepDistance={todayFitnessLog?.stepDistance ?? 0}
+            stepDistanceGoal={todayFitnessLog?.stepDistanceGoal ?? 5.0}
+            date={todayFitnessLog?.date || todayStr}
+            onLogClick={() => setLogFitnessOpen(true)}
             compact
           />
 
@@ -261,6 +279,29 @@ export function DashboardView({
           if (newAct) {
             setActList((prev) => [newAct, ...prev.filter((a) => a.id !== newAct.id)]);
           }
+          handleRefresh();
+        }}
+      />
+
+      <LogAppleFitnessDialog
+        open={logFitnessOpen}
+        onOpenChange={setLogFitnessOpen}
+        initialData={
+          todayFitnessLog || {
+            date: todayStr,
+            calories: 500,
+            stepCount: 8000,
+            stepDistance: 5.5,
+          }
+        }
+        onSuccess={(saved) => {
+          setFitnessLogs((prev) => {
+            const exists = prev.some((f) => f.id === saved.id || f.date === saved.date);
+            if (exists) {
+              return prev.map((f) => (f.id === saved.id || f.date === saved.date ? saved : f));
+            }
+            return [saved, ...prev].sort((a, b) => b.date.localeCompare(a.date));
+          });
           handleRefresh();
         }}
       />

@@ -685,16 +685,16 @@ export function TodayPlan({
   const visibleSections = activeTab === "all" ? sections : sections.filter((s) => s.id === activeTab);
 
   return (
-    <Card className="shadow-xs border-slate-200/90 overflow-hidden bg-white">
+    <Card className="shadow-xs border-slate-200/90 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-900">
       {/* Sleek, Theme-Harmonized Card Header (Clean Slate/Teal Palette) */}
-      <CardHeader className="bg-gradient-to-r from-slate-50 via-teal-50/20 to-indigo-50/30 p-4 sm:p-5 border-b border-slate-100 space-y-3">
+      <CardHeader className="bg-gradient-to-r from-slate-50 via-teal-50/20 to-indigo-50/30 dark:from-slate-900 dark:via-teal-950/20 dark:to-indigo-950/30 p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 text-[11px] font-bold uppercase tracking-wider">
-              <Sparkles className="w-3 h-3 text-teal-600" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 text-[11px] font-bold uppercase tracking-wider">
+              <Sparkles className="w-3 h-3 text-teal-600 dark:text-teal-400" />
               Daily Care Protocol
             </div>
-            <CardTitle className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+            <CardTitle className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Today&apos;s Metabolic Routine
             </CardTitle>
           </div>
@@ -702,21 +702,21 @@ export function TodayPlan({
           {/* Date Picker, Reminder Bell & WhatsApp Button */}
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
             {/* Day Mode Switcher Pill */}
-            <div className="flex items-center bg-white px-2 py-1 rounded-xl border border-slate-200 text-xs shadow-2xs gap-1.5">
-              {dayMode === "office" && <Briefcase className="w-3.5 h-3.5 text-indigo-600" />}
-              {dayMode === "weekend" && <Home className="w-3.5 h-3.5 text-teal-600" />}
-              {dayMode === "festival" && <Sparkles className="w-3.5 h-3.5 text-amber-600" />}
-              {dayMode === "travel" && <Plane className="w-3.5 h-3.5 text-sky-600" />}
+            <div className="flex items-center bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs shadow-2xs gap-1.5">
+              {dayMode === "office" && <Briefcase className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />}
+              {dayMode === "weekend" && <Home className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />}
+              {dayMode === "festival" && <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />}
+              {dayMode === "travel" && <Plane className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />}
 
               <select
                 value={dayMode}
                 onChange={(e) => handleChangeDayMode(e.target.value as DayModeType)}
-                className="bg-transparent font-semibold text-slate-700 text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent font-semibold text-slate-700 dark:text-slate-200 text-xs focus:outline-none cursor-pointer"
               >
-                <option value="office">🏢 Office Day</option>
-                <option value="weekend">🏡 Weekend Off</option>
-                <option value="festival">🎉 Festival</option>
-                <option value="travel">✈️ Travel</option>
+                <option value="office" className="dark:bg-slate-900 dark:text-white">🏢 Office Day</option>
+                <option value="weekend" className="dark:bg-slate-900 dark:text-white">🏡 Weekend Off</option>
+                <option value="festival" className="dark:bg-slate-900 dark:text-white">🎉 Festival</option>
+                <option value="travel" className="dark:bg-slate-900 dark:text-white">✈️ Travel</option>
               </select>
             </div>
 
@@ -728,13 +728,13 @@ export function TodayPlan({
               onClick={handleToggleReminders}
               className={`h-8 px-2.5 text-xs gap-1 shadow-2xs ${
                 remindersEnabled
-                  ? "bg-teal-50 border-teal-300 text-teal-800"
-                  : "bg-white text-slate-600 hover:text-slate-900"
+                  ? "bg-teal-50 dark:bg-teal-950/60 border-teal-300 dark:border-teal-700 text-teal-800 dark:text-teal-300"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white dark:border-slate-700"
               }`}
               title="Toggle audio & in-app reminder chimes"
             >
               {remindersEnabled ? (
-                <BellRing className="w-3.5 h-3.5 text-teal-600 animate-pulse" />
+                <BellRing className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 animate-pulse" />
               ) : (
                 <Bell className="w-3.5 h-3.5 text-slate-400" />
               )}
@@ -744,13 +744,13 @@ export function TodayPlan({
             </Button>
 
             {/* Date Input */}
-            <div className="flex items-center gap-1 bg-white px-2 py-1 rounded-xl border border-slate-200 text-xs text-slate-700 shadow-2xs">
+            <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-1 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 shadow-2xs">
               <Calendar className="w-3 h-3 text-slate-400" />
               <input
                 type="date"
                 value={selectedDate}
                 onChange={(e) => setSelectedDate(e.target.value)}
-                className="bg-transparent text-slate-800 font-medium text-xs focus:outline-none cursor-pointer"
+                className="bg-transparent text-slate-800 dark:text-slate-200 font-medium text-xs focus:outline-none cursor-pointer"
               />
             </div>
 
@@ -768,17 +768,17 @@ export function TodayPlan({
         </div>
 
         {/* Compact Progress Bar */}
-        <div className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-1.5">
+        <div className="p-3 rounded-xl bg-white dark:bg-slate-800/80 border border-slate-200/90 dark:border-slate-700 shadow-2xs space-y-1.5">
           <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-slate-700 flex items-center gap-1.5">
+            <span className="text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <span>Today&apos;s Adherence:</span>
-              <span className="text-slate-900 font-extrabold">{completedTasks}/{totalTasks}</span>
-              <span className="text-slate-400 font-normal">tasks completed</span>
+              <span className="text-slate-900 dark:text-white font-extrabold">{completedTasks}/{totalTasks}</span>
+              <span className="text-slate-400 dark:text-slate-500 font-normal">tasks completed</span>
             </span>
-            <span className="text-teal-700 font-black text-sm">{percentage}%</span>
+            <span className="text-teal-700 dark:text-teal-400 font-black text-sm">{percentage}%</span>
           </div>
 
-          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden p-0.5">
+          <div className="h-2.5 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden p-0.5">
             <div
               className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300"
               style={{ width: `${percentage}%` }}
@@ -787,16 +787,16 @@ export function TodayPlan({
         </div>
 
         {/* iOS User Tip Accordion */}
-        <div className="text-[11px] text-slate-500 flex items-center justify-between">
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
           <span className="flex items-center gap-1">
-            <Cloud className="w-3 h-3 text-teal-600" />
+            <Cloud className="w-3 h-3 text-teal-600 dark:text-teal-400" />
             <span>{isSyncing ? "Saving cloud log..." : "Syncs across iPhone, Mac & PC"}</span>
           </span>
 
           <button
             type="button"
             onClick={() => setShowIosTip(!showIosTip)}
-            className="text-teal-700 hover:underline inline-flex items-center gap-0.5 font-medium"
+            className="text-teal-700 dark:text-teal-400 hover:underline inline-flex items-center gap-0.5 font-medium"
           >
             <Info className="w-3 h-3" />
             <span>iPhone App Tip</span>
@@ -804,13 +804,13 @@ export function TodayPlan({
         </div>
 
         {showIosTip && (
-          <div className="p-2.5 rounded-lg bg-teal-50/70 border border-teal-200 text-[11px] text-teal-900 leading-snug">
+          <div className="p-2.5 rounded-lg bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-[11px] text-teal-900 dark:text-teal-200 leading-snug">
             📱 <strong>For iPhone / iPad Users:</strong> Open in Safari, tap the <strong>Share button</strong> (square with arrow up 📤) and choose <strong>&ldquo;Add to Home Screen&rdquo;</strong>. It transforms GlucoCare into a standalone app with full screen view and native sound alerts!
           </div>
         )}
 
         {/* Segmented Time-Slot Tabs (Solves Length Issue!) */}
-        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl text-xs overflow-x-auto">
+        <div className="flex items-center gap-1 bg-slate-100/90 dark:bg-slate-800/90 p-1 rounded-xl text-xs overflow-x-auto">
           {sections.map((sec) => {
             const doneCnt = sec.tasks.filter((t) => t.done).length;
             const isCurrent = activeTab === sec.id;
@@ -821,16 +821,16 @@ export function TodayPlan({
                 onClick={() => setActiveTab(sec.id)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap transition-all ${
                   isCurrent
-                    ? "bg-white text-teal-900 shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                    ? "bg-white dark:bg-slate-700 text-teal-900 dark:text-teal-300 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
                 }`}
               >
                 <span>{sec.shortTitle}</span>
                 <span
                   className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                     doneCnt === sec.tasks.length && sec.tasks.length > 0
-                      ? "bg-emerald-100 text-emerald-800"
-                      : "bg-slate-200 text-slate-700"
+                      ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {doneCnt}/{sec.tasks.length}
@@ -844,8 +844,8 @@ export function TodayPlan({
             onClick={() => setActiveTab("all")}
             className={`px-3 py-1.5 rounded-lg font-bold text-xs whitespace-nowrap transition-all ${
               activeTab === "all"
-                ? "bg-white text-teal-900 shadow-xs"
-                : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
+                ? "bg-white dark:bg-slate-700 text-teal-900 dark:text-teal-300 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60"
             }`}
           >
             Show All
@@ -862,11 +862,11 @@ export function TodayPlan({
           return (
             <div
               key={sec.id}
-              className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-2xs space-y-2.5"
+              className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 dark:bg-slate-900/60 p-3.5 shadow-2xs space-y-2.5"
             >
               {/* Slot Header */}
-              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
-                <h3 className="text-xs sm:text-sm font-bold text-slate-900 tracking-tight">
+              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                   {sec.title}
                 </h3>
 
@@ -874,8 +874,8 @@ export function TodayPlan({
                   variant="secondary"
                   className={`text-[10px] font-bold ${
                     secDone === secTotal && secTotal > 0
-                      ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-                      : "bg-slate-100 text-slate-700"
+                      ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {secDone}/{secTotal} Completed
@@ -891,8 +891,8 @@ export function TodayPlan({
                       onClick={() => handleToggleTask(sec.id, task.id)}
                       className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all cursor-pointer select-none ${
                         task.done
-                          ? "bg-emerald-50/50 border-emerald-200/70 text-slate-600"
-                          : "bg-white border-slate-200/90 hover:border-teal-300 hover:bg-slate-50/50 text-slate-800"
+                          ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/70 dark:border-emerald-800/60 text-slate-600 dark:text-slate-400"
+                          : "bg-white dark:bg-slate-800 border-slate-200/90 dark:border-slate-700 hover:border-teal-300 dark:hover:border-teal-600 hover:bg-slate-50/50 dark:hover:bg-slate-750 text-slate-800 dark:text-slate-200"
                       }`}
                     >
                       {/* Checkbox Icon */}
@@ -905,7 +905,7 @@ export function TodayPlan({
                         className={`h-4.5 w-4.5 rounded-md flex items-center justify-center shrink-0 mt-0.5 transition-all ${
                           task.done
                             ? "bg-emerald-600 text-white shadow-2xs"
-                            : "border-2 border-slate-300 hover:border-teal-600 bg-white"
+                            : "border-2 border-slate-300 dark:border-slate-600 hover:border-teal-600 dark:hover:border-teal-400 bg-white dark:bg-slate-700"
                         }`}
                         aria-label={task.title}
                       >
@@ -915,7 +915,7 @@ export function TodayPlan({
                       {/* Content */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
                             <Clock className="w-2.5 h-2.5" />
                             {task.time}
                           </span>
@@ -933,14 +933,14 @@ export function TodayPlan({
 
                         <p
                           className={`text-xs font-semibold leading-snug ${
-                            task.done ? "line-through text-slate-400 font-medium" : "text-slate-800"
+                            task.done ? "line-through text-slate-400 dark:text-slate-500 font-medium" : "text-slate-800 dark:text-slate-100"
                           }`}
                         >
                           {task.title}
                         </p>
 
                         {task.subtitle && (
-                          <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                             {task.subtitle}
                           </p>
                         )}
@@ -951,7 +951,7 @@ export function TodayPlan({
                         type="button"
                         onClick={(e) => handleDeleteTask(sec.id, task.id, e)}
                         title="Delete task"
-                        className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-opacity"
+                        className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-opacity"
                       >
                         <Trash2 className="w-3 h-3" />
                       </button>
@@ -975,14 +975,14 @@ export function TodayPlan({
                       handleAddTask(sec.id);
                     }
                   }}
-                  className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:border-teal-500 transition-colors"
+                  className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-teal-500 transition-colors"
                 />
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={() => handleAddTask(sec.id)}
-                  className="h-7 text-xs px-2 text-slate-600 hover:text-slate-900"
+                  className="h-7 text-xs px-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-slate-700"
                 >
                   <Plus className="w-3 h-3" />
                   <span className="hidden sm:inline">Add</span>

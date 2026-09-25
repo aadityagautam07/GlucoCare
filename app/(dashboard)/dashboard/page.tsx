@@ -19,6 +19,7 @@ export default async function DashboardPage() {
   const activities = memoryDb.getActivities(user.id);
   const appointments = memoryDb.getAppointments(user.id);
   const rations = memoryDb.getRations(user.id);
+  const appleFitnessLogs = memoryDb.getAppleFitnessLogs(user.id);
 
   return (
     <DashboardView
@@ -30,6 +31,7 @@ export default async function DashboardPage() {
       activities={activities}
       appointments={appointments}
       rations={rations}
+      appleFitnessLogs={appleFitnessLogs}
     />
   );
 }

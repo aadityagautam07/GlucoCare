@@ -32,7 +32,9 @@ import {
   AdminUserSummary,
   AdminSystemStats,
   DailyLogRecord,
+  AppleFitnessDayLog,
 } from "@/types";
+import { AppleFitnessLogInput } from "@/lib/validations";
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -104,6 +106,7 @@ interface InMemStore {
   rations: RationItem[];
   dailyLogs: DailyLogRecord[];
   labReports: LabReport[];
+  appleFitnessLogs: AppleFitnessDayLog[];
   resetTokens: ResetTokenRecord[];
 }
 
@@ -130,6 +133,7 @@ function persistStoreToDisk() {
       rations: store.rations,
       dailyLogs: store.dailyLogs,
       labReports: store.labReports,
+      appleFitnessLogs: store.appleFitnessLogs || [],
       resetTokens: store.resetTokens || [],
     };
 
@@ -185,6 +189,7 @@ function getMemoryStore(): InMemStore {
         rations: Array.isArray(parsed.rations) ? parsed.rations : [],
         dailyLogs: Array.isArray(parsed.dailyLogs) ? parsed.dailyLogs : [],
         labReports: Array.isArray(parsed.labReports) ? parsed.labReports : [],
+        appleFitnessLogs: Array.isArray(parsed.appleFitnessLogs) ? parsed.appleFitnessLogs : [],
         resetTokens: Array.isArray(parsed.resetTokens) ? parsed.resetTokens : [],
       };
 
@@ -231,10 +236,11 @@ function getMemoryStore(): InMemStore {
     dailyLogs: [],
     labReports: [...demoLabReports],
     resetTokens: [],
+    appleFitnessLogs: [],
   };
 
   persistStoreToDisk();
-  return global.memoryStore;
+  return global.memoryStore!;
 }
 
 export const memoryDb = {
@@ -474,6 +480,73 @@ export const memoryDb = {
         userId,
       }));
       store.labReports.push(...clonedReports);
+      hasChanges = true;
+    }
+
+    // Starter Apple Fitness Daily Logs (Calories, Step Count, Step Distance)
+    if (!store.appleFitnessLogs) store.appleFitnessLogs = [];
+    const hasFitnessLogs = store.appleFitnessLogs.some((f) => f.userId === userId);
+    if (!hasFitnessLogs) {
+      const today = new Date();
+      const demoFitness: AppleFitnessDayLog[] = [
+        {
+          id: `fit-${userId}-0`,
+          userId,
+          date: today.toISOString().split("T")[0],
+          calories: 520,
+          stepCount: 8450,
+          stepDistance: 6.2,
+          caloriesGoal: 500,
+          stepCountGoal: 10000,
+          stepDistanceGoal: 5.0,
+          notes: "Daily walk & commute movement",
+          createdAt: today.toISOString(),
+          updatedAt: today.toISOString(),
+        },
+        {
+          id: `fit-${userId}-1`,
+          userId,
+          date: new Date(Date.now() - 86400000 * 1).toISOString().split("T")[0],
+          calories: 580,
+          stepCount: 9800,
+          stepDistance: 7.3,
+          caloriesGoal: 500,
+          stepCountGoal: 10000,
+          stepDistanceGoal: 5.0,
+          notes: "Brisk evening walk after dinner",
+          createdAt: today.toISOString(),
+          updatedAt: today.toISOString(),
+        },
+        {
+          id: `fit-${userId}-2`,
+          userId,
+          date: new Date(Date.now() - 86400000 * 2).toISOString().split("T")[0],
+          calories: 460,
+          stepCount: 7200,
+          stepDistance: 5.1,
+          caloriesGoal: 500,
+          stepCountGoal: 10000,
+          stepDistanceGoal: 5.0,
+          notes: "Desk work + stair intervals",
+          createdAt: today.toISOString(),
+          updatedAt: today.toISOString(),
+        },
+        {
+          id: `fit-${userId}-3`,
+          userId,
+          date: new Date(Date.now() - 86400000 * 3).toISOString().split("T")[0],
+          calories: 610,
+          stepCount: 10400,
+          stepDistance: 7.8,
+          caloriesGoal: 500,
+          stepCountGoal: 10000,
+          stepDistanceGoal: 5.0,
+          notes: "Closed all 3 rings! Jog + weekend hike",
+          createdAt: today.toISOString(),
+          updatedAt: today.toISOString(),
+        },
+      ];
+      store.appleFitnessLogs.push(...demoFitness);
       hasChanges = true;
     }
 
@@ -803,6 +876,84 @@ export const memoryDb = {
     return changed;
   },
 
+  // Apple Fitness Daily Logs (Calories, Step Count, Step Distance)
+  getAppleFitnessLogs(userId: string): AppleFitnessDayLog[] {
+    this.ensureUserStarterData(userId);
+    const store = getMemoryStore();
+    return (store.appleFitnessLogs || [])
+      .filter((f) => f.userId === userId)
+      .sort((a, b) => b.date.localeCompare(a.date));
+  },
+
+  getAppleFitnessLogForDate(userId: string, date: string): AppleFitnessDayLog | null {
+    this.ensureUserStarterData(userId);
+    const store = getMemoryStore();
+    const found = (store.appleFitnessLogs || []).find(
+      (f) => f.userId === userId && f.date === date
+    );
+    return found || null;
+  },
+
+  saveAppleFitnessLog(userId: string, data: AppleFitnessLogInput): AppleFitnessDayLog {
+    this.ensureUserStarterData(userId);
+    const store = getMemoryStore();
+    if (!store.appleFitnessLogs) store.appleFitnessLogs = [];
+
+    const existingIdx = store.appleFitnessLogs.findIndex(
+      (f) => f.userId === userId && f.date === data.date
+    );
+
+    const now = new Date().toISOString();
+
+    if (existingIdx >= 0) {
+      const existing = store.appleFitnessLogs[existingIdx];
+      const updated: AppleFitnessDayLog = {
+        ...existing,
+        calories: Number(data.calories),
+        stepCount: Number(data.stepCount),
+        stepDistance: Number(data.stepDistance),
+        caloriesGoal: data.caloriesGoal ? Number(data.caloriesGoal) : (existing.caloriesGoal || 500),
+        stepCountGoal: data.stepCountGoal ? Number(data.stepCountGoal) : (existing.stepCountGoal || 10000),
+        stepDistanceGoal: data.stepDistanceGoal ? Number(data.stepDistanceGoal) : (existing.stepDistanceGoal || 5.0),
+        notes: data.notes !== undefined ? data.notes : existing.notes,
+        updatedAt: now,
+      };
+      store.appleFitnessLogs[existingIdx] = updated;
+      persistStoreToDisk();
+      return updated;
+    } else {
+      const newLog: AppleFitnessDayLog = {
+        id: `fit-${userId}-${data.date}-${Date.now()}`,
+        userId,
+        date: data.date,
+        calories: Number(data.calories),
+        stepCount: Number(data.stepCount),
+        stepDistance: Number(data.stepDistance),
+        caloriesGoal: Number(data.caloriesGoal || 500),
+        stepCountGoal: Number(data.stepCountGoal || 10000),
+        stepDistanceGoal: Number(data.stepDistanceGoal || 5.0),
+        notes: data.notes || "",
+        createdAt: now,
+        updatedAt: now,
+      };
+      store.appleFitnessLogs.unshift(newLog);
+      persistStoreToDisk();
+      return newLog;
+    }
+  },
+
+  deleteAppleFitnessLog(id: string, userId: string): boolean {
+    const store = getMemoryStore();
+    if (!store.appleFitnessLogs) return false;
+    const len = store.appleFitnessLogs.length;
+    store.appleFitnessLogs = store.appleFitnessLogs.filter(
+      (f) => !(f.id === id && f.userId === userId)
+    );
+    const changed = store.appleFitnessLogs.length < len;
+    if (changed) persistStoreToDisk();
+    return changed;
+  },
+
   // Password Reset Tokens
   saveResetToken(email: string, token: string, expiresInMs = 60 * 60 * 1000): void {
     const store = getMemoryStore();
@@ -882,6 +1033,10 @@ export const memoryDb = {
       .filter((r) => r.userId === patientId)
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+    const appleFitnessLogs = (store.appleFitnessLogs || [])
+      .filter((f) => f.userId === patientId)
+      .sort((a, b) => b.date.localeCompare(a.date));
+
     const totalReadings = glucose.length;
     const avgGlucose = totalReadings > 0
       ? Math.round(glucose.reduce((acc, g) => acc + g.value, 0) / totalReadings)
@@ -904,6 +1059,7 @@ export const memoryDb = {
       rations,
       dailyLogs,
       labReports,
+      appleFitnessLogs,
       metrics: {
         totalReadings,
         avgGlucose,
@@ -913,7 +1069,11 @@ export const memoryDb = {
         activeMedsCount: medications.length,
         mealsLoggedCount: meals.length,
         labReportsCount: labReports.length,
+        fitnessLogsCount: appleFitnessLogs.length,
+        latestFitness: appleFitnessLogs[0] || null,
       },
     };
   },
 };
+
+export const db = memoryDb;

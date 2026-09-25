@@ -62,23 +62,23 @@ export function ProfileView({ user }: ProfileViewProps) {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Patient Profile & Targets
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Manage your personal diabetes management profile and personalized glucose target ranges.
         </p>
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Personal Details */}
-        <Card className="shadow-xs">
+        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center gap-3 pb-2">
-            <div className="h-8 w-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 flex items-center justify-center">
               <User className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Personal Information
               </CardTitle>
             </div>
@@ -101,7 +101,7 @@ export function ProfileView({ user }: ProfileViewProps) {
                   id="email"
                   value={email}
                   disabled
-                  className="bg-slate-50 text-slate-500 cursor-not-allowed"
+                  className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 dark:border-slate-700 cursor-not-allowed"
                 />
               </div>
             </div>
@@ -138,16 +138,16 @@ export function ProfileView({ user }: ProfileViewProps) {
         </Card>
 
         {/* Personalized Target Ranges */}
-        <Card className="shadow-xs">
+        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center gap-3 pb-2">
-            <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 flex items-center justify-center">
               <Target className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Target Glucose Ranges (in mg/dL)
               </CardTitle>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Configured with your healthcare team to establish your personalized &quot;in-target&quot; zones.
               </p>
             </div>
@@ -200,7 +200,7 @@ export function ProfileView({ user }: ProfileViewProps) {
       </form>
 
       {/* Developer & Contact Section */}
-      <div className="pt-6 border-t border-slate-200">
+      <div className="pt-6 border-t border-slate-200 dark:border-slate-800">
         <CreatorProfileCard />
       </div>
     </div>

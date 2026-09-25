@@ -67,26 +67,26 @@ export function SettingsView({ user }: SettingsViewProps) {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
           Application Settings
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Customize notifications, measurement units, security, and privacy preferences.
         </p>
       </div>
 
       <div className="space-y-6">
         {/* Measurement Units */}
-        <Card className="shadow-xs">
+        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center gap-3 pb-2">
-            <div className="h-8 w-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 flex items-center justify-center">
               <Scale className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Measurement Units
               </CardTitle>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Configure your blood glucose unit across all charts, tables, and reports.
               </p>
             </div>
@@ -107,16 +107,16 @@ export function SettingsView({ user }: SettingsViewProps) {
         </Card>
 
         {/* Notification Reminders */}
-        <Card className="shadow-xs">
+        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center gap-3 pb-2">
-            <div className="h-8 w-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 flex items-center justify-center">
               <Bell className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Notification Preferences
               </CardTitle>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Configure gentle reminders for daily routine tasks.
               </p>
             </div>
@@ -129,10 +129,10 @@ export function SettingsView({ user }: SettingsViewProps) {
                 onCheckedChange={setMedReminders}
               />
               <div className="space-y-0.5">
-                <Label htmlFor="medReminders" className="cursor-pointer text-sm font-semibold text-slate-800">
+                <Label htmlFor="medReminders" className="cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-200">
                   Medication Reminders
                 </Label>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Remind me when scheduled morning, evening, or bedtime medication doses are due.
                 </p>
               </div>
@@ -145,10 +145,10 @@ export function SettingsView({ user }: SettingsViewProps) {
                 onCheckedChange={setGluReminders}
               />
               <div className="space-y-0.5">
-                <Label htmlFor="gluReminders" className="cursor-pointer text-sm font-semibold text-slate-800">
+                <Label htmlFor="gluReminders" className="cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-200">
                   Glucose Check Prompts
                 </Label>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Daily prompts to record morning fasting levels and 2-hour post-meal checks.
                 </p>
               </div>
@@ -161,10 +161,10 @@ export function SettingsView({ user }: SettingsViewProps) {
                 onCheckedChange={setAppReminders}
               />
               <div className="space-y-0.5">
-                <Label htmlFor="appReminders" className="cursor-pointer text-sm font-semibold text-slate-800">
+                <Label htmlFor="appReminders" className="cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-200">
                   Appointment Alerts
                 </Label>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Advance notifications for upcoming medical check-ups and specialist visits.
                 </p>
               </div>
@@ -173,30 +173,30 @@ export function SettingsView({ user }: SettingsViewProps) {
         </Card>
 
         {/* Privacy & Health Data Policy */}
-        <Card className="shadow-xs border-slate-200">
+        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800">
           <CardHeader className="flex flex-row items-center gap-3 pb-2">
-            <div className="h-8 w-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center">
               <Shield className="h-4 w-4" />
             </div>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
                 Privacy & Medical Data Protection
               </CardTitle>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Your health data is completely private, isolated, and encrypted.
               </p>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3 pt-2 text-xs text-slate-600 leading-relaxed">
-            <div className="flex items-center gap-2 text-emerald-700 font-semibold">
+          <CardContent className="space-y-3 pt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>Session isolation: Your records are strictly scoped to your authenticated account.</span>
             </div>
-            <div className="flex items-center gap-2 text-emerald-700 font-semibold">
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>No URL health leak: Sensitive medical parameters are never passed via URL query strings.</span>
             </div>
-            <div className="flex items-center gap-2 text-emerald-700 font-semibold">
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 font-semibold">
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>Zero medical diagnosis claims: All summaries are strictly observational tracking aids.</span>
             </div>

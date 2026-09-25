@@ -292,31 +292,31 @@ export function SmartMealSuggester({
   };
 
   return (
-    <Card className="border-slate-200/90 shadow-xs overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-amber-50/70 via-slate-50 to-teal-50/50 p-4 sm:p-5 border-b border-slate-100">
+    <Card className="border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden bg-white dark:bg-slate-900">
+      <CardHeader className="bg-gradient-to-r from-amber-50/70 via-slate-50 to-teal-50/50 dark:from-slate-900 dark:via-amber-950/10 dark:to-teal-950/20 p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[11px] font-bold uppercase tracking-wider">
-              <ChefHat className="w-3.5 h-3.5 text-amber-700" />
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 text-[11px] font-bold uppercase tracking-wider">
+              <ChefHat className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400" />
               Pantry & Lifestyle Meal Suggester
             </div>
-            <CardTitle className="text-lg font-bold text-slate-900">
+            <CardTitle className="text-lg font-bold text-slate-900 dark:text-white">
               Personalized Diabetic Meal Suggestions
             </CardTitle>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Matches your monthly rations and adapts recipes to your workdays, weekends, festivals, and trips.
             </p>
           </div>
 
           {/* Day Mode Switcher */}
-          <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs self-start sm:self-auto flex-wrap">
+          <div className="flex items-center gap-1 bg-white dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs self-start sm:self-auto flex-wrap">
             <button
               type="button"
               onClick={() => setSelectedMode("office")}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 selectedMode === "office"
                   ? "bg-indigo-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
               title="Office Day (Mon-Fri Routine, Quick Tiffin, Desk Snacks)"
             >
@@ -330,7 +330,7 @@ export function SmartMealSuggester({
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 selectedMode === "weekend"
                   ? "bg-teal-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
               title="Weekend (Sat-Sun Off, Relaxed Cooking, Restorative)"
             >
@@ -344,7 +344,7 @@ export function SmartMealSuggester({
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 selectedMode === "festival"
                   ? "bg-amber-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
               title="Festival / Celebration Mode (Diabetic Sweets & Fiber Armor)"
             >
@@ -358,7 +358,7 @@ export function SmartMealSuggester({
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                 selectedMode === "travel"
                   ? "bg-sky-600 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700"
               }`}
               title="Travel / Trip (Dry Rations, Airport/Train Survival)"
             >
@@ -405,36 +405,36 @@ export function SmartMealSuggester({
               return (
                 <div
                   key={recipe.id}
-                  className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between gap-3"
+                  className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-850 dark:bg-slate-800/80 p-4 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between gap-3"
                 >
                   <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="capitalize text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                          <span className="capitalize text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
                             {recipe.mealType}
                           </span>
-                          <span className="text-[11px] font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                          <span className="text-[11px] font-medium text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded-full border border-teal-200 dark:border-teal-800">
                             {recipe.glycemicTag}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-slate-900 mt-1">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                           {recipe.title}
                         </h4>
                       </div>
 
-                      <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1 shrink-0">
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1 shrink-0">
                         <Clock className="w-3 h-3 text-slate-400" />
                         {recipe.prepTime}
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-600 leading-relaxed">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       {recipe.description}
                     </p>
 
                     {/* Nutrition Macro Badges */}
-                    <div className="flex items-center gap-3 text-xs pt-1 border-t border-slate-100 text-slate-700">
+                    <div className="flex items-center gap-3 text-xs pt-1 border-t border-slate-100 dark:border-slate-700 text-slate-700 dark:text-slate-300">
                       <span>
                         🔥 <strong>{recipe.calories}</strong> kcal
                       </span>
@@ -448,7 +448,7 @@ export function SmartMealSuggester({
 
                     {/* Required Staples & Pantry Inventory Status */}
                     <div className="space-y-1 pt-1">
-                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                         Pantry Ingredients:
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -457,14 +457,14 @@ export function SmartMealSuggester({
                             key={idx}
                             className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md border ${
                               av.available
-                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                : "bg-amber-50 text-amber-800 border-amber-200"
+                                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
+                                : "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800"
                             }`}
                           >
                             {av.available ? (
-                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                             ) : (
-                              <AlertCircle className="w-3 h-3 text-amber-600" />
+                              <AlertCircle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
                             )}
                             <span className="capitalize">{av.name}</span>
                             <span className="opacity-75">
@@ -472,7 +472,7 @@ export function SmartMealSuggester({
                               {av.unit})
                             </span>
                             {av.available && (
-                              <span className="text-[10px] text-emerald-600 font-bold">
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
                                 ✓ in pantry
                               </span>
                             )}
@@ -481,7 +481,7 @@ export function SmartMealSuggester({
                       </div>
                     </div>
 
-                    <p className="text-[11px] text-slate-500 italic bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
                       💡 {recipe.tips}
                     </p>
                   </div>

@@ -432,7 +432,7 @@ export function AdminView({ currentUser }: { currentUser?: UserProfile | null })
                       {/* Status */}
                       <td className="px-4 py-4">
                         {u.status === "suspended" ? (
-                          <Badge variant="destructive" className="font-bold">
+                          <Badge variant="high" className="font-bold">
                             <UserX className="w-3 h-3 mr-1" />
                             Suspended
                           </Badge>
@@ -1029,9 +1029,9 @@ export function AdminView({ currentUser }: { currentUser?: UserProfile | null })
                         {r.title}
                       </div>
                       <div className="text-slate-500">
-                        {r.labName} &bull; {formatDate(r.date)} &bull; Type: {r.reportType}
+                        {r.doctorOrLab} &bull; {formatDate(r.date)} &bull; Category: {r.category}
                       </div>
-                      {r.summary && <div className="text-slate-700 dark:text-slate-300 font-medium">{r.summary}</div>}
+                      {r.summaryMetrics && <div className="text-slate-700 dark:text-slate-300 font-medium">{r.summaryMetrics}</div>}
                     </div>
                   ))}
                 </div>
@@ -1049,12 +1049,12 @@ export function AdminView({ currentUser }: { currentUser?: UserProfile | null })
                     >
                       <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-teal-600" />
-                        {app.providerName} ({app.specialty})
+                        {app.doctorName} {app.specialty ? `(${app.specialty})` : ""}
                       </div>
                       <div className="text-slate-500">
                         {formatDate(app.date)} at {app.time} &bull; {app.location}
                       </div>
-                      {app.reason && <div className="text-slate-600 dark:text-slate-300">{app.reason}</div>}
+                      {app.title && <div className="text-slate-600 dark:text-slate-300">{app.title}</div>}
                     </div>
                   ))}
                 </div>

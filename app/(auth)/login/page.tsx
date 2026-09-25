@@ -51,7 +51,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
@@ -59,18 +59,17 @@ export default function LoginPage() {
             <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-indigo-700 to-teal-600 text-white flex items-center justify-center shadow-md">
               <HeartPulse className="h-5 w-5" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-900">
-              Gluco<span className="text-teal-600">Care</span>
+            <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Gluco<span className="text-teal-600 dark:text-teal-400">Care</span>
             </span>
           </Link>
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             Daily diabetes tracking with clarity and calm
           </p>
         </div>
 
-
         {/* Regular Login Card */}
-        <Card className="shadow-md border-slate-200">
+        <Card className="shadow-md border-slate-200/80 dark:border-slate-800">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Sign in to your account</CardTitle>
             <CardDescription className="text-xs">
@@ -101,7 +100,7 @@ export default function LoginPage() {
                   <Label htmlFor="login-password">Password</Label>
                   <Link
                     href="/forgot-password"
-                    className="text-xs text-indigo-600 hover:underline"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline"
                   >
                     Reset password
                   </Link>
@@ -120,7 +119,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 transition-colors p-0.5 rounded focus:outline-none"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-0.5 rounded focus:outline-none"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -142,11 +141,11 @@ export default function LoginPage() {
                 Sign In
               </Button>
 
-              <div className="text-center text-xs text-slate-500">
+              <div className="text-center text-xs text-slate-500 dark:text-slate-400">
                 Don&apos;t have an account?{" "}
                 <Link
                   href="/register"
-                  className="font-semibold text-indigo-600 hover:underline"
+                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
                   Create account
                 </Link>

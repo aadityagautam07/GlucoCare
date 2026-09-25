@@ -64,15 +64,15 @@ export function GlucoseTable({
     <div className="space-y-4">
       {/* Context Filter Tabs */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl">
+        <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
           {contexts.map((ctx) => (
             <button
               key={ctx.id}
               onClick={() => setFilterContext(ctx.id)}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                 filterContext === ctx.id
-                  ? "bg-white text-indigo-900 shadow-xs"
-                  : "text-slate-600 hover:text-slate-900"
+                  ? "bg-white dark:bg-slate-700 text-indigo-900 dark:text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
               {ctx.label}
@@ -80,21 +80,21 @@ export function GlucoseTable({
           ))}
         </div>
 
-        <span className="text-xs text-slate-500 font-medium">
+        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           Showing {filtered.length} entries
         </span>
       </div>
 
       {/* Table / List */}
-      <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs">
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
         {filtered.length === 0 ? (
-          <div className="p-8 text-center text-sm text-slate-500">
+          <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
             No readings found matching the selected context.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-slate-100 bg-slate-50/70 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <thead className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 <tr>
                   <th className="px-5 py-3.5">Level</th>
                   <th className="px-5 py-3.5">Context & Status</th>
@@ -103,7 +103,7 @@ export function GlucoseTable({
                   <th className="px-5 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                 {filtered.map((reading) => {
                   const status = getGlucoseStatus(
                     reading.value,
@@ -115,12 +115,12 @@ export function GlucoseTable({
                   return (
                     <tr
                       key={reading.id}
-                      className="hover:bg-slate-50/60 transition-colors"
+                      className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors"
                     >
                       {/* Glucose Value */}
-                      <td className="px-5 py-3.5 font-bold text-slate-900 whitespace-nowrap">
+                      <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-white whitespace-nowrap">
                         <span className="text-lg">{displayVal}</span>{" "}
-                        <span className="text-xs font-normal text-slate-500">
+                        <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
                           {unit}
                         </span>
                       </td>
@@ -128,7 +128,7 @@ export function GlucoseTable({
                       {/* Context & Badge */}
                       <td className="px-5 py-3.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs capitalize font-medium text-slate-700">
+                          <span className="text-xs capitalize font-medium text-slate-700 dark:text-slate-300">
                             {reading.context.replace("_", " ")}
                           </span>
                           <Badge
@@ -148,17 +148,17 @@ export function GlucoseTable({
                       </td>
 
                       {/* Date & Time */}
-                      <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-600">
-                        <span className="font-semibold text-slate-800">
+                      <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-600 dark:text-slate-300">
+                        <span className="font-semibold text-slate-800 dark:text-slate-200">
                           {formatDate(reading.date)}
                         </span>
-                        <span className="block text-slate-400">
+                        <span className="block text-slate-400 dark:text-slate-500">
                           {formatTime(reading.time)}
                         </span>
                       </td>
 
                       {/* Notes */}
-                      <td className="px-5 py-3.5 text-xs text-slate-500 max-w-xs truncate">
+                      <td className="px-5 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">
                         {reading.notes || "—"}
                       </td>
 
@@ -168,7 +168,7 @@ export function GlucoseTable({
                           {onEditReading && (
                             <button
                               onClick={() => onEditReading(reading)}
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
                               title="Edit reading"
                             >
                               <Edit2 className="h-4 w-4" />
@@ -176,7 +176,7 @@ export function GlucoseTable({
                           )}
                           <button
                             onClick={() => setDeleteTarget(reading)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                             title="Delete reading"
                           >
                             <Trash2 className="h-4 w-4" />

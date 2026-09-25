@@ -230,7 +230,7 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
         {/* Category Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
           {[
@@ -247,7 +247,7 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
               className={`px-3 py-1.5 text-xs font-semibold rounded-xl whitespace-nowrap transition-colors ${
                 activeCategory === tab.id
                   ? "bg-indigo-700 text-white shadow-xs"
-                  : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                  : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}
             >
               {tab.label}
@@ -269,12 +269,12 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
 
       {/* Document Grid / List */}
       {filteredReports.length === 0 ? (
-        <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 space-y-3">
-          <div className="h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center mx-auto">
+        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center mx-auto">
             <FileText className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">No diagnostic documents found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
+          <h3 className="text-base font-bold text-slate-900 dark:text-white">No diagnostic documents found</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
             {searchQuery
               ? "No lab reports match your search query."
               : "Upload your laboratory test sheets, physician consultation notes, or blood panels to keep everything safely organized."}
@@ -299,12 +299,12 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
             return (
               <Card
                 key={report.id}
-                className="shadow-xs hover:border-indigo-200 transition-all border-slate-200 overflow-hidden flex flex-col justify-between"
+                className="shadow-xs hover:border-indigo-200 dark:hover:border-indigo-800 transition-all border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden flex flex-col justify-between"
               >
                 <CardContent className="p-5 space-y-3.5 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center shrink-0 mt-0.5">
                         <FileBadge className="h-5 w-5" />
                       </div>
                       <div>
@@ -319,10 +319,10 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
                             {formatDate(report.date)}
                           </span>
                         </div>
-                        <h4 className="text-sm font-bold text-slate-900 mt-1 leading-snug">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1 leading-snug">
                           {report.title}
                         </h4>
-                        <p className="text-xs font-semibold text-slate-600 flex items-center gap-1 mt-0.5">
+                        <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1 mt-0.5">
                           <Building className="h-3 w-3 text-slate-400" />
                           {report.doctorOrLab}
                         </p>
@@ -332,11 +332,11 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
 
                   {/* Key Metrics Highlight Banner */}
                   {report.summaryMetrics && (
-                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-0.5">
+                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700 text-xs">
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-0.5">
                         Extracted Metrics
                       </span>
-                      <p className="font-semibold text-indigo-950 font-mono text-[11px]">
+                      <p className="font-semibold text-indigo-950 dark:text-indigo-300 font-mono text-[11px]">
                         {report.summaryMetrics}
                       </p>
                     </div>
@@ -344,7 +344,7 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
 
                   {/* Notes */}
                   {report.notes && (
-                    <p className="text-xs text-slate-500 italic bg-amber-50/50 p-2 rounded-lg border border-amber-100">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 italic bg-amber-50/50 dark:bg-amber-950/20 p-2 rounded-lg border border-amber-100 dark:border-amber-900/40">
                       &quot;{report.notes}&quot;
                     </p>
                   )}

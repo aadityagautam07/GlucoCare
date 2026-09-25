@@ -50,10 +50,10 @@ export function QuickActionSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="bottom" className="max-w-lg mx-auto pb-8">
         <SheetHeader className="text-center sm:text-left">
-          <SheetTitle className="text-lg font-bold text-slate-900">
+          <SheetTitle className="text-lg font-bold text-slate-900 dark:text-white">
             Quick Log
           </SheetTitle>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Select an action to record your health entry today.
           </p>
         </SheetHeader>
@@ -68,7 +68,7 @@ export function QuickActionSheet({
                   onOpenChange(false);
                   onSelectAction(act.id);
                 }}
-                className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 active:scale-[0.98] transition-all text-left shadow-xs group"
+                className="flex items-center gap-3.5 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.98] transition-all text-left shadow-xs group"
               >
                 <div
                   className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${act.color} transition-transform group-hover:scale-105`}
@@ -76,10 +76,10 @@ export function QuickActionSheet({
                   <Icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-900 leading-tight">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">
                     {act.title}
                   </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     {act.description}
                   </p>
                 </div>

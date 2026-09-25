@@ -69,7 +69,7 @@ export default function RegisterPage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50">
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-slate-50 dark:bg-slate-950 transition-colors">
       <div className="w-full max-w-md space-y-6">
         {/* Brand Header */}
         <div className="text-center space-y-2">
@@ -77,17 +77,17 @@ export default function RegisterPage() {
             <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-indigo-700 to-teal-600 text-white flex items-center justify-center shadow-md">
               <HeartPulse className="h-5 w-5" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-900">
-              Gluco<span className="text-teal-600">Care</span>
+            <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              Gluco<span className="text-teal-600 dark:text-teal-400">Care</span>
             </span>
           </Link>
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
             Join patients who manage their daily diabetes with confidence
           </p>
         </div>
 
         {/* Register Card */}
-        <Card className="shadow-md border-slate-200">
+        <Card className="shadow-md border-slate-200/80 dark:border-slate-800">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg">Create your account</CardTitle>
             <CardDescription className="text-xs">
@@ -145,7 +145,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 transition-colors p-0.5 rounded focus:outline-none"
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-0.5 rounded focus:outline-none"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -191,15 +191,15 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowAdminField((prev) => !prev)}
-                  className="text-[11px] font-semibold text-purple-700 hover:text-purple-800 flex items-center gap-1 transition-colors"
+                  className="text-[11px] font-semibold text-purple-700 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 flex items-center gap-1 transition-colors"
                 >
-                  <Shield className="w-3 h-3 text-purple-600" />
+                  <Shield className="w-3 h-3 text-purple-600 dark:text-purple-400" />
                   <span>{showAdminField ? "Hide Admin Setup Key" : "Have an Admin Setup Key?"}</span>
                 </button>
 
                 {showAdminField && (
-                  <div className="mt-2 p-3 rounded-xl bg-purple-50/70 border border-purple-200/80 space-y-1.5">
-                    <Label htmlFor="reg-adminkey" className="text-xs text-purple-900 font-semibold">
+                  <div className="mt-2 p-3 rounded-xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800 space-y-1.5">
+                    <Label htmlFor="reg-adminkey" className="text-xs text-purple-900 dark:text-purple-300 font-semibold">
                       Admin Setup Key
                     </Label>
                     <div className="relative">
@@ -209,12 +209,12 @@ export default function RegisterPage() {
                         placeholder="Enter setup key (or your AUTH_SECRET)"
                         value={adminKey}
                         onChange={(e) => setAdminKey(e.target.value)}
-                        className="bg-white border-purple-200 text-xs text-purple-950 pr-10"
+                        className="bg-white dark:bg-slate-900 border-purple-200 dark:border-purple-800 text-xs text-purple-950 dark:text-purple-200 pr-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowAdminKey(!showAdminKey)}
-                        className="absolute right-3 top-2.5 text-purple-400 hover:text-purple-700 transition-colors p-0.5 rounded focus:outline-none"
+                        className="absolute right-3 top-2.5 text-purple-400 hover:text-purple-700 dark:hover:text-purple-200 transition-colors p-0.5 rounded focus:outline-none"
                         aria-label={showAdminKey ? "Hide key" : "Show key"}
                       >
                         {showAdminKey ? (
@@ -224,7 +224,7 @@ export default function RegisterPage() {
                         )}
                       </button>
                     </div>
-                    <p className="text-[10px] text-purple-700">
+                    <p className="text-[10px] text-purple-700 dark:text-purple-400">
                       Configures this account with master administrative rights across all users and features.
                     </p>
                   </div>
@@ -241,11 +241,11 @@ export default function RegisterPage() {
                 Create Free Account
               </Button>
 
-              <div className="text-center text-xs text-slate-500">
+              <div className="text-center text-xs text-slate-500 dark:text-slate-400">
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="font-semibold text-indigo-600 hover:underline"
+                  className="font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
                   Sign in
                 </Link>

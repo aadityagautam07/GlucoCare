@@ -269,4 +269,19 @@ export interface LabReport {
   createdAt: string;
 }
 
+export interface AppleFitnessDayLog {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  calories: number; // Active calories (kcal)
+  stepCount: number; // Total step count
+  stepDistance: number; // Step distance in km
+  caloriesGoal?: number; // default 500 kcal
+  stepCountGoal?: number; // default 10000 steps
+  stepDistanceGoal?: number; // default 5.0 km
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 

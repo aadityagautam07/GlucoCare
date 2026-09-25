@@ -50,7 +50,7 @@ export function MealTimeline({ meals, onRefresh }: MealTimelineProps) {
 
   if (meals.length === 0) {
     return (
-      <div className="p-8 text-center text-sm text-slate-500 bg-white rounded-2xl border border-slate-200">
+      <div className="p-8 text-center text-sm text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
         No meals recorded yet. Log your breakfast, lunch, dinner, or snacks to see them here.
       </div>
     );
@@ -61,11 +61,11 @@ export function MealTimeline({ meals, onRefresh }: MealTimelineProps) {
       {meals.map((meal) => (
         <Card
           key={meal.id}
-          className="shadow-xs hover:border-amber-200 transition-all border-slate-200/80"
+          className="shadow-xs hover:border-amber-200 dark:hover:border-amber-800 transition-all border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900"
         >
           <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3.5">
-              <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
                 <Utensils className="h-5 w-5" />
               </div>
               <div>
@@ -77,20 +77,20 @@ export function MealTimeline({ meals, onRefresh }: MealTimelineProps) {
                   >
                     {meal.mealType}
                   </span>
-                  <span className="text-xs text-slate-400 flex items-center gap-1">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {formatDate(meal.date)} at {formatTime(meal.time)}
                   </span>
                 </div>
 
-                <h4 className="text-sm font-bold text-slate-900 mt-1">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mt-1">
                   {meal.description}
                 </h4>
 
                 {/* Macros */}
-                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
                   {meal.carbohydrates !== undefined && meal.carbohydrates !== null && (
-                    <span className="font-semibold text-slate-700">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
                       {meal.carbohydrates}g carbs
                     </span>
                   )}
@@ -106,7 +106,7 @@ export function MealTimeline({ meals, onRefresh }: MealTimelineProps) {
                 </div>
 
                 {meal.notes && (
-                  <p className="text-xs text-slate-500 mt-1 italic">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
                     &quot;{meal.notes}&quot;
                   </p>
                 )}
@@ -117,7 +117,7 @@ export function MealTimeline({ meals, onRefresh }: MealTimelineProps) {
                     {meal.rationIngredients.map((ing, i) => (
                       <span
                         key={i}
-                        className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 border border-amber-200/80 font-medium"
+                        className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800 font-medium"
                       >
                         <Package className="h-3 w-3 text-amber-600" />
                         {ing.rationName}: {ing.quantity}{ing.unit}

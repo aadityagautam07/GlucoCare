@@ -103,29 +103,29 @@ export function RationInventory({ rations, onRefresh }: RationInventoryProps) {
   return (
     <div className="space-y-6">
       {/* Month & Action Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-900">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">
               Monthly Household Pantry & Ration
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               Track your allocated diabetic staple supplies to prevent running out mid-month.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl text-xs">
-            <Calendar className="h-3.5 w-3.5 text-slate-500" />
+          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-1.5 rounded-xl text-xs">
+            <Calendar className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="bg-transparent border-none text-slate-700 font-semibold focus:outline-hidden"
+              className="bg-transparent border-none text-slate-700 dark:text-slate-200 font-semibold focus:outline-hidden"
             />
           </div>
 
@@ -245,8 +245,8 @@ export function RationInventory({ rations, onRefresh }: RationInventoryProps) {
             onClick={() => setCategoryFilter(tab.id)}
             className={`px-3 py-1.5 rounded-lg font-medium transition-colors shrink-0 ${
               categoryFilter === tab.id
-                ? "bg-slate-900 text-white"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-xs"
+                : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
             }`}
           >
             {tab.label}
@@ -256,12 +256,12 @@ export function RationInventory({ rations, onRefresh }: RationInventoryProps) {
 
       {/* Rations Grid */}
       {filteredRations.length === 0 ? (
-        <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 text-sm text-slate-500">
-          <Package className="h-8 w-8 mx-auto text-slate-300 mb-2" />
-          <p className="font-semibold text-slate-700">
+        <div className="p-10 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-500 dark:text-slate-400">
+          <Package className="h-8 w-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+          <p className="font-semibold text-slate-700 dark:text-slate-200">
             No ration staples found for {selectedMonth}
           </p>
-          <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
             Click &quot;Add Staple&quot; above to set up your monthly quota for oats, whole grains, lentils, or healthy fats.
           </p>
           <Button

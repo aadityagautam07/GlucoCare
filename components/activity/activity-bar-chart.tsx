@@ -47,14 +47,14 @@ export function ActivityBarChart({ activities }: ActivityBarChartProps) {
     <Card className="shadow-sm">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2">
         <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
             <Footprints className="h-4 w-4" />
           </div>
           <div>
-            <CardTitle className="text-base font-bold text-slate-900">
+            <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
               Weekly Activity
             </CardTitle>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Active minutes vs 30 min daily recommendation
             </p>
           </div>
@@ -63,12 +63,12 @@ export function ActivityBarChart({ activities }: ActivityBarChartProps) {
         <div className="flex items-center gap-4 text-xs">
           <div>
             <span className="text-slate-400">Total this week:</span>{" "}
-            <span className="font-bold text-emerald-700">{totalWeeklyMinutes} mins</span>
+            <span className="font-bold text-emerald-700 dark:text-emerald-400">{totalWeeklyMinutes} mins</span>
           </div>
           {totalWeeklySteps > 0 && (
             <div>
               <span className="text-slate-400">Steps:</span>{" "}
-              <span className="font-bold text-slate-800">
+              <span className="font-bold text-slate-800 dark:text-slate-200">
                 {totalWeeklySteps.toLocaleString()}
               </span>
             </div>
@@ -114,14 +114,14 @@ export function ActivityBarChart({ activities }: ActivityBarChartProps) {
                   if (active && payload && payload.length) {
                     const data = payload[0].payload;
                     return (
-                      <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-lg text-xs">
-                        <p className="font-bold text-slate-800">{data.dayLabel} ({data.dateStr})</p>
-                        <div className="mt-1 flex items-center gap-1.5 text-emerald-700 font-semibold">
+                      <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-lg text-xs">
+                        <p className="font-bold text-slate-800 dark:text-white">{data.dayLabel} ({data.dateStr})</p>
+                        <div className="mt-1 flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 font-semibold">
                           <Footprints className="h-3.5 w-3.5" />
                           <span>{data.minutes} active minutes</span>
                         </div>
                         {data.steps > 0 && (
-                          <p className="text-slate-500 mt-0.5">
+                          <p className="text-slate-500 dark:text-slate-400 mt-0.5">
                             {data.steps.toLocaleString()} steps
                           </p>
                         )}

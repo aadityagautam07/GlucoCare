@@ -13,6 +13,7 @@ export default async function ActivityPage() {
   }
 
   const activities = memoryDb.getActivities(user.id);
+  const appleFitnessLogs = memoryDb.getAppleFitnessLogs(user.id);
 
-  return <ActivityView activities={activities} />;
+  return <ActivityView activities={activities} initialFitnessLogs={appleFitnessLogs} />;
 }

@@ -258,15 +258,15 @@ export function InsightCards({
       </div>
 
       {/* Trust & Clinical Prep Card */}
-      <div className="p-5 rounded-2xl bg-white border border-slate-200 flex items-start gap-4">
-        <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-          <ShieldCheck className="h-5 w-5 text-teal-600" />
+      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-start gap-4">
+        <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shrink-0">
+          <ShieldCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
         </div>
         <div>
-          <h4 className="text-sm font-bold text-slate-900">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-white">
             Preparing for your next doctor&apos;s appointment?
           </h4>
-          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
             You can generate a consolidated PDF or printable report containing your complete 7, 30, or 90-day glucose trends, meal summaries, and medication logs from the Reports section.
           </p>
         </div>

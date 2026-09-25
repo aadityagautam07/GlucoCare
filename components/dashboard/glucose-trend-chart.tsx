@@ -93,7 +93,7 @@ export function GlucoseTrendChart({
         </div>
 
         {showTimeframeSelector && (
-          <div className="inline-flex rounded-xl bg-slate-100 p-1 self-start sm:self-auto">
+          <div className="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 self-start sm:self-auto">
             {(["7D", "14D", "30D", "90D"] as const).map((tf) => (
               <button
                 key={tf}
@@ -101,8 +101,8 @@ export function GlucoseTrendChart({
                 onClick={() => setTimeframe(tf)}
                 className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
                   timeframe === tf
-                    ? "bg-white text-indigo-900 shadow-xs"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-white dark:bg-slate-700 text-indigo-900 dark:text-white shadow-xs"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
                 {tf}
@@ -176,15 +176,15 @@ export function GlucoseTrendChart({
                     if (active && payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-lg text-xs">
-                          <p className="font-semibold text-slate-800">{data.label}</p>
+                        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 shadow-lg text-xs">
+                          <p className="font-semibold text-slate-800 dark:text-white">{data.label}</p>
                           <div className="mt-1.5 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-indigo-600" />
-                            <span className="text-sm font-bold text-indigo-900">
+                            <span className="h-2 w-2 rounded-full bg-indigo-600 dark:bg-indigo-400" />
+                            <span className="text-sm font-bold text-indigo-900 dark:text-indigo-300">
                               {data.value} {data.unit}
                             </span>
                           </div>
-                          <span className="mt-1 block text-slate-500 capitalize">
+                          <span className="mt-1 block text-slate-500 dark:text-slate-400 capitalize">
                             Context: {data.context}
                           </span>
                         </div>
