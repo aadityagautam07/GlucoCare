@@ -132,7 +132,9 @@ export function AddActivityDialog({
                 id="durationMinutes"
                 type="number"
                 placeholder="30"
-                {...register("durationMinutes", { valueAsNumber: true })}
+                {...register("durationMinutes", {
+                  setValueAs: (v) => (v === "" || v === null || isNaN(Number(v)) ? undefined : Number(v)),
+                })}
                 autoFocus
               />
               {errors.durationMinutes && (
@@ -159,7 +161,9 @@ export function AddActivityDialog({
               id="steps"
               type="number"
               placeholder="e.g. 3500"
-              {...register("steps", { valueAsNumber: true })}
+              {...register("steps", {
+                setValueAs: (v) => (v === "" || v === null || isNaN(Number(v)) ? null : Number(v)),
+              })}
             />
           </div>
 

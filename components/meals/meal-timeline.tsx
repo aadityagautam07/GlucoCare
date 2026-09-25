@@ -20,13 +20,13 @@ export function MealTimeline({ meals, onRefresh }: MealTimelineProps) {
   const getMealBadgeColor = (type: Meal["mealType"]) => {
     switch (type) {
       case "breakfast":
-        return "bg-amber-50 text-amber-800 border-amber-200";
+        return "bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800";
       case "lunch":
-        return "bg-teal-50 text-teal-800 border-teal-200";
+        return "bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-800";
       case "dinner":
-        return "bg-indigo-50 text-indigo-800 border-indigo-200";
+        return "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800";
       case "snack":
-        return "bg-emerald-50 text-emerald-800 border-emerald-200";
+        return "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800";
     }
   };
 
