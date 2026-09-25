@@ -15,6 +15,7 @@ export default async function DashboardPage() {
   const meals = memoryDb.getMeals(user.id);
   const activities = memoryDb.getActivities(user.id);
   const appointments = memoryDb.getAppointments(user.id);
+  const rations = memoryDb.getRations(user.id);
 
   return (
     <DashboardView
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
       meals={meals}
       activities={activities}
       appointments={appointments}
+      rations={rations}
     />
   );
 }

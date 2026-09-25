@@ -12,6 +12,8 @@ import { AddGlucoseDialog } from "@/components/glucose/add-glucose-dialog";
 import { AddMedicationDialog } from "@/components/medications/add-medication-dialog";
 import { AddMealDialog } from "@/components/meals/add-meal-dialog";
 import { AddActivityDialog } from "@/components/activity/add-activity-dialog";
+import { SmartMealSuggester } from "@/components/meals/smart-meal-suggester";
+import { MealInput } from "@/lib/validations";
 import {
   UserProfile,
   GlucoseReading,
@@ -20,6 +22,7 @@ import {
   Meal,
   Activity,
   Appointment,
+  RationItem,
 } from "@/types";
 import { useRouter } from "next/navigation";
 
@@ -31,6 +34,7 @@ interface DashboardViewProps {
   meals: Meal[];
   activities: Activity[];
   appointments: Appointment[];
+  rations?: RationItem[];
 }
 
 export function DashboardView({
@@ -41,11 +45,13 @@ export function DashboardView({
   meals,
   activities,
   appointments,
+  rations = [],
 }: DashboardViewProps) {
   const router = useRouter();
   const [addGlucoseOpen, setAddGlucoseOpen] = React.useState(false);
   const [addMedOpen, setAddMedOpen] = React.useState(false);
   const [addMealOpen, setAddMealOpen] = React.useState(false);
+  const [prefilledMeal, setPrefilledMeal] = React.useState<Partial<MealInput> | undefined>(undefined);
   const [addActOpen, setAddActOpen] = React.useState(false);
 
   const todayStr = new Date().toISOString().split("T")[0];
@@ -66,8 +72,16 @@ export function DashboardView({
   const handleQuickAction = (type: "glucose" | "medication" | "meal" | "activity") => {
     if (type === "glucose") setAddGlucoseOpen(true);
     if (type === "medication") setAddMedOpen(true);
-    if (type === "meal") setAddMealOpen(true);
+    if (type === "meal") {
+      setPrefilledMeal(undefined);
+      setAddMealOpen(true);
+    }
     if (type === "activity") setAddActOpen(true);
+  };
+
+  const handleCookAndLog = (recipeData: Partial<MealInput>) => {
+    setPrefilledMeal(recipeData);
+    setAddMealOpen(true);
   };
 
   return (
@@ -130,6 +144,12 @@ export function DashboardView({
         </div>
       </div>
 
+      {/* Smart Contextual Meal Suggester matching Monthly Rations & Working Schedule */}
+      <SmartMealSuggester
+        rations={rations}
+        onCookAndLog={handleCookAndLog}
+      />
+
       {/* Action Dialogs */}
       <AddGlucoseDialog
         open={addGlucoseOpen}
@@ -146,7 +166,12 @@ export function DashboardView({
 
       <AddMealDialog
         open={addMealOpen}
-        onOpenChange={setAddMealOpen}
+        onOpenChange={(open) => {
+          setAddMealOpen(open);
+          if (!open) setPrefilledMeal(undefined);
+        }}
+        initialData={prefilledMeal}
+        availableRations={rations}
         onSuccess={handleRefresh}
       />
 

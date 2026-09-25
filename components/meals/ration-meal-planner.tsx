@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { RationItem, MealType } from "@/types";
 import { MealInput } from "@/lib/validations";
+import { SmartMealSuggester } from "./smart-meal-suggester";
 
 interface RecipeIngredient {
   stapleNameMatch: string; // substring or exact match to patient's ration
@@ -174,6 +175,9 @@ export function RationMealPlanner({
 
   return (
     <div className="space-y-6">
+      {/* Contextual & Lifestyle Day Mode Smart Suggester */}
+      <SmartMealSuggester rations={rations} onCookAndLog={onCookAndLog} />
+
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-amber-50 to-orange-50/40 p-4 rounded-2xl border border-amber-200/80 shadow-xs">
         <div className="flex items-center gap-3">

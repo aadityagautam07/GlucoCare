@@ -27,6 +27,7 @@ import {
   UserPermissions,
   AdminUserSummary,
   AdminSystemStats,
+  DailyLogRecord,
 } from "@/types";
 
 interface MongooseCache {
@@ -90,6 +91,7 @@ interface InMemStore {
   activities: Activity[];
   appointments: Appointment[];
   rations: RationItem[];
+  dailyLogs: DailyLogRecord[];
 }
 
 declare global {
@@ -135,6 +137,7 @@ function getMemoryStore(): InMemStore {
       activities: [...demoActivities],
       appointments: [...demoAppointments],
       rations: [...demoRationItems],
+      dailyLogs: [],
     };
   }
   return global.memoryStore;
@@ -500,6 +503,42 @@ export const memoryDb = {
     item.usedQuantity = Math.max(0, Number((item.usedQuantity - quantity).toFixed(2)));
     item.updatedAt = new Date().toISOString();
     return true;
+  },
+
+  // Daily Logs & Routines
+  getDailyLog(userId: string, date: string): DailyLogRecord | undefined {
+    const store = getMemoryStore();
+    return store.dailyLogs.find((l) => l.userId === userId && l.date === date);
+  },
+
+  saveDailyLog(log: DailyLogRecord): DailyLogRecord {
+    const store = getMemoryStore();
+    const idx = store.dailyLogs.findIndex((l) => l.userId === log.userId && l.date === log.date);
+    const now = new Date().toISOString();
+    if (idx >= 0) {
+      store.dailyLogs[idx] = {
+        ...store.dailyLogs[idx],
+        ...log,
+        updatedAt: now,
+      };
+      return store.dailyLogs[idx];
+    }
+    const newLog = {
+      ...log,
+      id: log.id || `daily-log-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    store.dailyLogs.push(newLog);
+    return newLog;
+  },
+
+  getDailyLogs(userId: string, limit = 30): DailyLogRecord[] {
+    const store = getMemoryStore();
+    return store.dailyLogs
+      .filter((l) => l.userId === userId)
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, limit);
   },
 };
 

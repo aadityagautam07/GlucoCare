@@ -46,6 +46,7 @@ export interface UserProfile {
     glucoseReminders: boolean;
     appointmentReminders: boolean;
   };
+  lifestyleProfile?: UserLifestyleProfile;
   createdAt: string;
 }
 
@@ -204,5 +205,40 @@ export interface TodayPlanItem {
   category: "medication" | "glucose" | "meal" | "activity";
   completed: boolean;
   actionId?: string;
+}
+
+export type DayModeType = "office" | "weekend" | "festival" | "travel";
+
+export interface UserLifestyleProfile {
+  occupation?: string; // e.g. "Working Professional"
+  workSchedule?: "mon_fri" | "shifts" | "flexible" | "custom";
+  workDays?: number[]; // [1, 2, 3, 4, 5] (Monday to Friday)
+  weekendDays?: number[]; // [0, 6] (Sunday, Saturday)
+  defaultDayMode?: DayModeType;
+}
+
+export interface DailyTaskLogItem {
+  id: string;
+  sectionId: string;
+  title: string;
+  category: string;
+  done: boolean;
+  time: string;
+  stamp?: string;
+  isCustom?: boolean;
+}
+
+export interface DailyLogRecord {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  dayMode: DayModeType;
+  tasksCompleted: number;
+  totalTasks: number;
+  adherencePercentage: number;
+  tasks: DailyTaskLogItem[];
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
