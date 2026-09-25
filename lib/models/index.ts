@@ -209,6 +209,7 @@ export interface IAppointment extends Document {
   location: string;
   isVirtual: boolean;
   notes?: string;
+  reminderAlarm?: string;
   completed: boolean;
   createdAt: Date;
 }
@@ -223,6 +224,7 @@ const AppointmentSchema = new Schema<IAppointment>(
     time: { type: String, required: true },
     location: { type: String, required: true },
     isVirtual: { type: Boolean, default: false },
+    reminderAlarm: { type: String, default: "1h" },
     notes: { type: String },
     completed: { type: Boolean, default: false },
   },
@@ -289,5 +291,44 @@ RationItemSchema.index({ userId: 1, month: 1 });
 export const RationItemModel: Model<IRationItem> =
   mongoose.models.RationItem ||
   mongoose.model<IRationItem>("RationItem", RationItemSchema);
+
+// --- Lab & Diagnostic Report Schema ---
+export interface ILabReport extends Document {
+  userId: string;
+  title: string;
+  doctorOrLab: string;
+  category: string;
+  date: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: string;
+  fileType?: string;
+  summaryMetrics?: string;
+  notes?: string;
+  createdAt: Date;
+}
+
+const LabReportSchema = new Schema<ILabReport>(
+  {
+    userId: { type: String, required: true, index: true },
+    title: { type: String, required: true },
+    doctorOrLab: { type: String, required: true },
+    category: { type: String, required: true },
+    date: { type: String, required: true },
+    fileUrl: { type: String },
+    fileName: { type: String },
+    fileSize: { type: String },
+    fileType: { type: String },
+    summaryMetrics: { type: String },
+    notes: { type: String },
+  },
+  { timestamps: true }
+);
+LabReportSchema.index({ userId: 1, date: -1 });
+
+export const LabReportModel: Model<ILabReport> =
+  mongoose.models.LabReport ||
+  mongoose.model<ILabReport>("LabReport", LabReportSchema);
+
 
 

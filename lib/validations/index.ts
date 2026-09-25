@@ -120,6 +120,7 @@ export const appointmentSchema = z.object({
   time: z.string().min(1, "Time is required"),
   location: z.string().min(1, "Location is required").max(200),
   isVirtual: z.boolean().default(false),
+  reminderAlarm: z.enum(["15m", "30m", "1h", "2h", "1d", "none"]).optional().default("1h"),
   notes: z.string().max(300).optional(),
 });
 
@@ -160,4 +161,29 @@ export const registerSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+export const labReportSchema = z.object({
+  title: z.string().min(1, "Document title is required").max(100),
+  doctorOrLab: z.string().min(1, "Doctor or lab name is required").max(100),
+  category: z.enum([
+    "hba1c",
+    "blood_glucose",
+    "lipid_panel",
+    "kidney_function",
+    "liver_panel",
+    "prescription",
+    "doctor_notes",
+    "other",
+  ]),
+  date: z.string().min(1, "Date is required"),
+  fileUrl: z.string().optional(),
+  fileName: z.string().optional(),
+  fileSize: z.string().optional(),
+  fileType: z.string().optional(),
+  summaryMetrics: z.string().max(200).optional(),
+  notes: z.string().max(500).optional(),
+});
+
+export type LabReportInput = z.infer<typeof labReportSchema>;
+
 

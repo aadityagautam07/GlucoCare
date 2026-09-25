@@ -12,6 +12,7 @@ export default async function ReportsPage() {
   const initialReadings = memoryDb.getGlucoseReadings(user.id);
   const medications = memoryDb.getMedications(user.id);
   const medicationLogs = memoryDb.getMedicationLogs(user.id);
+  const initialLabReports = memoryDb.getLabReports(user.id);
 
   return (
     <ReportsView
@@ -19,6 +20,7 @@ export default async function ReportsPage() {
       initialReadings={initialReadings}
       medications={medications}
       medicationLogs={medicationLogs}
+      initialLabReports={initialLabReports}
     />
   );
 }

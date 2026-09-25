@@ -14,14 +14,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  CREATOR_INFO,
-  CreatorCard,
-  CreatorBadge,
-  GithubIcon,
-  LinkedinIcon,
-  InstagramIcon,
-} from "@/components/common/creator-credit";
 
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
@@ -73,9 +65,6 @@ export default function LandingPage() {
             <a href="#privacy" className="hover:text-slate-900 transition-colors">
               Privacy & Trust
             </a>
-            <a href="#creator" className="hover:text-slate-900 transition-colors">
-              Creator
-            </a>
             <a href="#faq" className="hover:text-slate-900 transition-colors">
               FAQ
             </a>
@@ -107,7 +96,6 @@ export default function LandingPage() {
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Calm, modern daily diabetes tracking</span>
                 </div>
-                <CreatorBadge />
               </div>
 
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.1]">
@@ -412,21 +400,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Creator & Developer Showcase Section */}
-      <section id="creator" className="py-16 md:py-20 bg-slate-50 border-t border-slate-200/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 space-y-2">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-indigo-700">
-              Meet The Developer
-            </h2>
-            <p className="text-3xl font-black text-slate-900 tracking-tight">
-              Crafted with Care & Precision
-            </p>
-          </div>
-          <CreatorCard />
-        </div>
-      </section>
-
       {/* Bottom CTA Banner */}
       <section className="py-16 bg-gradient-to-tr from-indigo-800 to-teal-700 text-white text-center">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6">
@@ -459,50 +432,11 @@ export default function LandingPage() {
               <HeartPulse className="h-3.5 w-3.5" />
             </div>
             <span className="font-bold text-slate-900">GlucoCare</span>
-            <span>— Modern Diabetes Management</span>
+            <span>— Modern Diabetes Management & Lifestyle Health</span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs">
-            <span>
-              Designed & Developed by{" "}
-              <a
-                href={CREATOR_INFO.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-bold text-indigo-700 hover:underline"
-              >
-                Aaditya Gautam
-              </a>
-            </span>
-            <div className="flex items-center gap-2.5 text-slate-400">
-              <a
-                href={CREATOR_INFO.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-slate-900 transition-colors"
-                title="GitHub: aadityagautam07"
-              >
-                <GithubIcon className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href={CREATOR_INFO.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-[#0077b5] transition-colors"
-                title="LinkedIn: aadityagautam07"
-              >
-                <LinkedinIcon className="h-3.5 w-3.5" />
-              </a>
-              <a
-                href={CREATOR_INFO.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-pink-600 transition-colors"
-                title="Instagram: @aadityagautam__"
-              >
-                <InstagramIcon className="h-3.5 w-3.5" />
-              </a>
-            </div>
+          <div className="text-xs text-slate-500">
+            <span>GlucoCare Health Platform. Designed for daily patient empowerment and clinical calm.</span>
           </div>
         </div>
       </footer>

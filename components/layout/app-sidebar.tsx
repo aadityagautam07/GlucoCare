@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   CREATOR_INFO,
   GithubIcon,
@@ -64,22 +65,23 @@ export function AppSidebar({ user }: AppSidebarProps) {
   };
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 bg-white border-r border-slate-200/80 z-30 select-none">
+    <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 bg-white dark:bg-slate-900 border-r border-slate-200/80 dark:border-slate-800 z-30 select-none">
       {/* Brand Wordmark & Logo */}
-      <div className="h-16 flex items-center px-6 border-b border-slate-100">
+      <div className="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-800">
         <Link href="/dashboard" className="flex items-center gap-2.5 group">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-700 to-teal-600 text-white shadow-sm transition-transform group-hover:scale-105">
             <HeartPulse className="h-5 w-5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold tracking-tight text-slate-900 leading-none">
-              Gluco<span className="text-teal-600">Care</span>
+            <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">
+              Gluco<span className="text-teal-600 dark:text-teal-400">Care</span>
             </span>
-            <span className="text-[10px] font-medium text-slate-600 tracking-wider uppercase mt-0.5">
+            <span className="text-[10px] font-medium text-slate-400 tracking-wider uppercase mt-0.5">
               Daily Companion
             </span>
           </div>
         </Link>
+        <ThemeToggle className="h-8 w-8" />
       </div>
 
       {/* Main Navigation Items */}
@@ -219,32 +221,32 @@ export function AppSidebar({ user }: AppSidebarProps) {
       </div>
 
       {/* User Profile Pill & Signout */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-        <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200/70 shadow-xs">
+      <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900">
+        <div className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700 shadow-xs">
           <Link href="/profile" className="flex items-center gap-2.5 min-w-0 flex-1 hover:opacity-80 transition-opacity">
-            <div className="h-8 w-8 rounded-full bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold text-xs shrink-0">
+            <div className="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 flex items-center justify-center font-bold text-xs shrink-0">
               {user?.name ? user.name.slice(0, 2).toUpperCase() : "PT"}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <p className="text-xs font-semibold text-slate-800 truncate">
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">
                   {user?.name || "Patient"}
                 </p>
                 {user?.role && (
                   <span
                     className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
                       user.role === "admin"
-                        ? "bg-purple-100 text-purple-700"
+                        ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
                         : user.role === "doctor"
-                        ? "bg-teal-100 text-teal-700"
-                        : "bg-slate-100 text-slate-600"
+                        ? "bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300"
+                        : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                     }`}
                   >
                     {user.role}
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-600 truncate">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {user?.diabetesType || "Type 2"} • {user?.glucoseUnit || "mg/dL"}
               </p>
             </div>
@@ -252,7 +254,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           <button
             onClick={handleLogout}
             title="Sign out"
-            className="p-1.5 rounded-lg text-slate-600 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
           >
             <LogOut className="h-4 w-4" />
           </button>

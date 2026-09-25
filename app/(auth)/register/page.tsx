@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartPulse, Mail, Lock, User, Shield } from "lucide-react";
+import { HeartPulse, Mail, Lock, User, Shield, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +17,9 @@ export default function RegisterPage() {
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
+  const [showPassword, setShowPassword] = React.useState(false);
   const [adminKey, setAdminKey] = React.useState("");
+  const [showAdminKey, setShowAdminKey] = React.useState(false);
   const [showAdminField, setShowAdminField] = React.useState(false);
   const [diabetesType, setDiabetesType] = React.useState<DiabetesType>("Type 2");
   const [glucoseUnit, setGlucoseUnit] = React.useState<GlucoseUnit>("mg/dL");
@@ -131,15 +133,27 @@ export default function RegisterPage() {
                 <div className="relative">
                   <Input
                     id="reg-password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="pl-9"
+                    className="pl-9 pr-10"
                   />
                   <Lock className="h-4 w-4 text-slate-400 absolute left-3 top-3.5 pointer-events-none" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-700 transition-colors p-0.5 rounded focus:outline-none"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -188,14 +202,28 @@ export default function RegisterPage() {
                     <Label htmlFor="reg-adminkey" className="text-xs text-purple-900 font-semibold">
                       Admin Setup Key
                     </Label>
-                    <Input
-                      id="reg-adminkey"
-                      type="password"
-                      placeholder="Enter setup key (or your AUTH_SECRET)"
-                      value={adminKey}
-                      onChange={(e) => setAdminKey(e.target.value)}
-                      className="bg-white border-purple-200 text-xs text-purple-950"
-                    />
+                    <div className="relative">
+                      <Input
+                        id="reg-adminkey"
+                        type={showAdminKey ? "text" : "password"}
+                        placeholder="Enter setup key (or your AUTH_SECRET)"
+                        value={adminKey}
+                        onChange={(e) => setAdminKey(e.target.value)}
+                        className="bg-white border-purple-200 text-xs text-purple-950 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminKey(!showAdminKey)}
+                        className="absolute right-3 top-2.5 text-purple-400 hover:text-purple-700 transition-colors p-0.5 rounded focus:outline-none"
+                        aria-label={showAdminKey ? "Hide key" : "Show key"}
+                      >
+                        {showAdminKey ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                     <p className="text-[10px] text-purple-700">
                       Configures this account with master administrative rights across all users and features.
                     </p>

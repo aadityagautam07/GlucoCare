@@ -10,6 +10,7 @@ import { Select } from "@/components/ui/select";
 import { UserProfile, DiabetesType, GlucoseUnit } from "@/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { CreatorProfileCard } from "./creator-profile-card";
 
 interface ProfileViewProps {
   user: UserProfile;
@@ -197,6 +198,11 @@ export function ProfileView({ user }: ProfileViewProps) {
           </Button>
         </div>
       </form>
+
+      {/* Developer & Contact Section */}
+      <div className="pt-6 border-t border-slate-200">
+        <CreatorProfileCard />
+      </div>
     </div>
   );
 }

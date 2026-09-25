@@ -10,6 +10,7 @@ import {
   demoActivities,
   demoAppointments,
   demoRationItems,
+  demoLabReports,
   DEMO_USER_ID,
   DEMO_ADMIN_ID,
 } from "./seed-data";
@@ -22,6 +23,7 @@ import {
   Appointment,
   UserProfile,
   RationItem,
+  LabReport,
   UserRole,
   UserStatus,
   UserPermissions,
@@ -92,6 +94,7 @@ interface InMemStore {
   appointments: Appointment[];
   rations: RationItem[];
   dailyLogs: DailyLogRecord[];
+  labReports: LabReport[];
 }
 
 declare global {
@@ -138,6 +141,7 @@ function getMemoryStore(): InMemStore {
       appointments: [...demoAppointments],
       rations: [...demoRationItems],
       dailyLogs: [],
+      labReports: [...demoLabReports],
     };
   }
   return global.memoryStore;
@@ -279,9 +283,99 @@ export const memoryDb = {
     };
   },
 
+  ensureUserStarterData(userId: string) {
+    if (!userId) return;
+    const store = getMemoryStore();
+
+    // Starter glucose
+    const hasGlucose = store.glucose.some((g) => g.userId === userId);
+    if (!hasGlucose) {
+      const clonedGlucose = demoGlucoseReadings.slice(0, 15).map((g, idx) => ({
+        ...g,
+        id: `glu-${userId}-${idx}-${Date.now()}`,
+        userId,
+      }));
+      store.glucose.push(...clonedGlucose);
+    }
+
+    // Starter medications
+    const hasMeds = store.medications.some((m) => m.userId === userId);
+    if (!hasMeds) {
+      const clonedMeds = demoMedications.map((m, idx) => ({
+        ...m,
+        id: `med-${userId}-${idx}`,
+        userId,
+      }));
+      store.medications.push(...clonedMeds);
+
+      const clonedLogs = demoMedicationLogs.map((l, idx) => ({
+        ...l,
+        id: `medlog-${userId}-${idx}`,
+        userId,
+        medicationId: `med-${userId}-0`,
+      }));
+      store.medicationLogs.push(...clonedLogs);
+    }
+
+    // Starter meals
+    const hasMeals = store.meals.some((m) => m.userId === userId);
+    if (!hasMeals) {
+      const clonedMeals = demoMeals.map((m, idx) => ({
+        ...m,
+        id: `meal-${userId}-${idx}`,
+        userId,
+      }));
+      store.meals.push(...clonedMeals);
+    }
+
+    // Starter activities
+    const hasActivities = store.activities.some((a) => a.userId === userId);
+    if (!hasActivities) {
+      const clonedActs = demoActivities.map((a, idx) => ({
+        ...a,
+        id: `act-${userId}-${idx}`,
+        userId,
+      }));
+      store.activities.push(...clonedActs);
+    }
+
+    // Starter appointments
+    const hasAppts = store.appointments.some((a) => a.userId === userId);
+    if (!hasAppts) {
+      const clonedAppts = demoAppointments.map((a, idx) => ({
+        ...a,
+        id: `appt-${userId}-${idx}`,
+        userId,
+      }));
+      store.appointments.push(...clonedAppts);
+    }
+
+    // Starter rations
+    const hasRations = store.rations.some((r) => r.userId === userId);
+    if (!hasRations) {
+      const clonedRations = demoRationItems.map((r, idx) => ({
+        ...r,
+        id: `rat-${userId}-${idx}`,
+        userId,
+      }));
+      store.rations.push(...clonedRations);
+    }
+
+    // Starter lab & diagnostic reports
+    const hasLabReports = store.labReports.some((r) => r.userId === userId);
+    if (!hasLabReports) {
+      const clonedReports = demoLabReports.map((r, idx) => ({
+        ...r,
+        id: `rep-${userId}-${idx}`,
+        userId,
+      }));
+      store.labReports.push(...clonedReports);
+    }
+  },
 
   // Glucose
   getGlucoseReadings(userId: string): GlucoseReading[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.glucose
       .filter((g) => g.userId === userId)
@@ -315,6 +409,7 @@ export const memoryDb = {
 
   // Medications
   getMedications(userId: string): Medication[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.medications.filter((m) => m.userId === userId);
   },
@@ -346,6 +441,7 @@ export const memoryDb = {
 
   // Medication Logs
   getMedicationLogs(userId: string): MedicationLog[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.medicationLogs
       .filter((l) => l.userId === userId)
@@ -360,6 +456,7 @@ export const memoryDb = {
 
   // Meals
   getMeals(userId: string): Meal[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.meals
       .filter((m) => m.userId === userId)
@@ -398,6 +495,7 @@ export const memoryDb = {
 
   // Activities
   getActivities(userId: string): Activity[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.activities
       .filter((a) => a.userId === userId)
@@ -419,6 +517,7 @@ export const memoryDb = {
 
   // Appointments
   getAppointments(userId: string): Appointment[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.appointments
       .filter((a) => a.userId === userId)
@@ -451,6 +550,7 @@ export const memoryDb = {
 
   // Rations
   getRations(userId: string, month?: string): RationItem[] {
+    this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.rations
       .filter((r) => r.userId === userId && (!month || r.month === month))
@@ -540,5 +640,28 @@ export const memoryDb = {
       .sort((a, b) => b.date.localeCompare(a.date))
       .slice(0, limit);
   },
+
+  // Lab & Diagnostic Reports
+  getLabReports(userId: string): LabReport[] {
+    this.ensureUserStarterData(userId);
+    const store = getMemoryStore();
+    return store.labReports
+      .filter((r) => r.userId === userId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  },
+
+  addLabReport(report: LabReport): LabReport {
+    const store = getMemoryStore();
+    store.labReports.unshift(report);
+    return report;
+  },
+
+  deleteLabReport(id: string, userId: string): boolean {
+    const store = getMemoryStore();
+    const len = store.labReports.length;
+    store.labReports = store.labReports.filter((r) => !(r.id === id && r.userId === userId));
+    return store.labReports.length < len;
+  },
 };
+
 

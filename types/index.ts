@@ -193,6 +193,7 @@ export interface Appointment {
   location: string;
   isVirtual?: boolean;
   notes?: string;
+  reminderAlarm?: "15m" | "30m" | "1h" | "2h" | "1d" | "none";
   completed?: boolean;
   createdAt: string;
 }
@@ -241,4 +242,31 @@ export interface DailyLogRecord {
   createdAt: string;
   updatedAt: string;
 }
+
+export type LabReportCategory =
+  | "hba1c"
+  | "blood_glucose"
+  | "lipid_panel"
+  | "kidney_function"
+  | "liver_panel"
+  | "prescription"
+  | "doctor_notes"
+  | "other";
+
+export interface LabReport {
+  id: string;
+  userId: string;
+  title: string;
+  doctorOrLab: string;
+  category: LabReportCategory;
+  date: string; // YYYY-MM-DD
+  fileUrl?: string; // base64 data url or public URL
+  fileName?: string;
+  fileSize?: string;
+  fileType?: string;
+  summaryMetrics?: string; // e.g. "HbA1c: 6.8%, Fasting: 110 mg/dL"
+  notes?: string;
+  createdAt: string;
+}
+
 

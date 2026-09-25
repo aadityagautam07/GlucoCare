@@ -180,29 +180,29 @@ function AddMealForm({
       </div>
 
       {/* Monthly Ration Ingredients Used */}
-      <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-200/70 space-y-2.5">
+      <div className="p-3 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200/70 dark:border-amber-900/40 space-y-2.5">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-            <Package className="h-3.5 w-3.5 text-amber-700" />
+          <span className="text-xs font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+            <Package className="h-3.5 w-3.5 shrink-0 text-amber-700 dark:text-amber-400" />
             Use Monthly Ration Staples
           </span>
-          <span className="text-[11px] text-amber-700">
+          <span className="text-[11px] text-amber-700 dark:text-amber-400">
             Deducts from your pantry inventory
           </span>
         </div>
 
         {availableRations.length > 0 ? (
           <div className="space-y-2">
-            <div className="flex items-end gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-2">
               <div className="flex-1 space-y-1">
-                <Label htmlFor="rationSelect" className="text-[11px] text-slate-600">
+                <Label htmlFor="rationSelect" className="text-[11px] text-slate-600 dark:text-slate-400">
                   Select Staple
                 </Label>
                 <Select
                   id="rationSelect"
                   value={selectedRationId}
                   onChange={(e) => setSelectedRationId(e.target.value)}
-                  className="h-8 text-xs bg-white"
+                  className="h-9 sm:h-8 text-xs bg-white dark:bg-slate-800"
                 >
                   {availableRations.map((r) => {
                     const rem = Math.max(0, r.allocatedQuantity - r.usedQuantity);
@@ -215,30 +215,32 @@ function AddMealForm({
                 </Select>
               </div>
 
-              <div className="w-24 space-y-1">
-                <Label htmlFor="rationQty" className="text-[11px] text-slate-600">
-                  Qty ({selectedStaple?.unit || "g"})
-                </Label>
-                <Input
-                  id="rationQty"
-                  type="number"
-                  step="any"
-                  value={rationQty}
-                  onChange={(e) => setRationQty(Number(e.target.value))}
-                  className="h-8 text-xs bg-white"
-                />
-              </div>
+              <div className="flex items-end gap-2">
+                <div className="w-28 space-y-1">
+                  <Label htmlFor="rationQty" className="text-[11px] text-slate-600 dark:text-slate-400">
+                    Qty ({selectedStaple?.unit || "g"})
+                  </Label>
+                  <Input
+                    id="rationQty"
+                    type="number"
+                    step="any"
+                    value={rationQty}
+                    onChange={(e) => setRationQty(Number(e.target.value))}
+                    className="h-9 sm:h-8 text-xs bg-white dark:bg-slate-800"
+                  />
+                </div>
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAddRationIngredient}
-                className="h-8 px-2.5 text-xs bg-white hover:bg-amber-100/50 text-amber-900 border-amber-300"
-              >
-                <Plus className="h-3.5 w-3.5 mr-0.5" />
-                Add
-              </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddRationIngredient}
+                  className="h-9 sm:h-8 px-3 text-xs bg-white dark:bg-slate-800 hover:bg-amber-100/50 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-700 shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-0.5 shrink-0" />
+                  Add
+                </Button>
+              </div>
             </div>
 
             {selectedStaple && rationQty > selectedRemaining && (

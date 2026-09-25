@@ -15,9 +15,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select } from "@/components/ui/select";
 import { appointmentSchema, AppointmentInput } from "@/lib/validations";
 import { toast } from "sonner";
-import { Calendar } from "lucide-react";
+import { Calendar, Bell } from "lucide-react";
 
 interface AddAppointmentDialogProps {
   open: boolean;
@@ -51,6 +52,7 @@ function AddAppointmentForm({
       time: "10:00",
       location: "",
       isVirtual: false,
+      reminderAlarm: "1h",
       notes: "",
     },
   });
@@ -156,6 +158,24 @@ function AddAppointmentForm({
         <Label htmlFor="isVirtual" className="cursor-pointer text-xs text-slate-700">
           This is a virtual telehealth consultation
         </Label>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="reminderAlarm" className="flex items-center gap-1.5">
+          <Bell className="h-3.5 w-3.5 text-indigo-600" />
+          <span>Reminder Alarm & Notification</span>
+        </Label>
+        <Select id="reminderAlarm" {...register("reminderAlarm")}>
+          <option value="15m">15 minutes before</option>
+          <option value="30m">30 minutes before</option>
+          <option value="1h">1 hour before (Recommended)</option>
+          <option value="2h">2 hours before</option>
+          <option value="1d">1 day before</option>
+          <option value="none">No alarm</option>
+        </Select>
+        <p className="text-[11px] text-slate-400">
+          Syncs with device calendar notifications and triggers on-screen alerts.
+        </p>
       </div>
 
       <div className="space-y-1.5">

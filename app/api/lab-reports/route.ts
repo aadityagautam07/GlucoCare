@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
-import { appointmentSchema } from "@/lib/validations";
+import { labReportSchema } from "@/lib/validations";
 import { memoryDb } from "@/lib/db";
-import { Appointment } from "@/types";
+import { LabReport } from "@/types";
 
 export async function GET() {
   try {
@@ -11,10 +11,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const appointments = memoryDb.getAppointments(user.id);
-    return NextResponse.json({ appointments });
+    const reports = memoryDb.getLabReports(user.id);
+    return NextResponse.json({ reports });
   } catch (error) {
-    console.error("GET /api/appointments error:", error);
+    console.error("GET /api/lab-reports error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -27,37 +27,36 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const result = appointmentSchema.safeParse(body);
+    const result = labReportSchema.safeParse(body);
 
     if (!result.success) {
       return NextResponse.json(
-        { error: "Invalid data", details: result.error.format() },
+        { error: "Invalid lab report data", details: result.error.format() },
         { status: 400 }
       );
     }
 
     const data = result.data;
-    const newApp: Appointment = {
-      id: "app-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
+    const newReport: LabReport = {
+      id: "rep-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
       userId: user.id,
       title: data.title,
-      doctorName: data.doctorName,
-      specialty: data.specialty || undefined,
+      doctorOrLab: data.doctorOrLab,
+      category: data.category,
       date: data.date,
-      time: data.time,
-      location: data.location,
-      isVirtual: !!data.isVirtual,
-      reminderAlarm: data.reminderAlarm || "1h",
+      fileUrl: data.fileUrl,
+      fileName: data.fileName,
+      fileSize: data.fileSize,
+      fileType: data.fileType,
+      summaryMetrics: data.summaryMetrics?.trim() || undefined,
       notes: data.notes?.trim() || undefined,
-      completed: false,
       createdAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.addAppointment(newApp);
-    return NextResponse.json({ appointment: saved }, { status: 201 });
+    const saved = memoryDb.addLabReport(newReport);
+    return NextResponse.json({ report: saved }, { status: 201 });
   } catch (error) {
-    console.error("POST /api/appointments error:", error);
+    console.error("POST /api/lab-reports error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-

@@ -13,6 +13,8 @@ import { AddMedicationDialog } from "@/components/medications/add-medication-dia
 import { AddMealDialog } from "@/components/meals/add-meal-dialog";
 import { AddActivityDialog } from "@/components/activity/add-activity-dialog";
 import { SmartMealSuggester } from "@/components/meals/smart-meal-suggester";
+import { AppleFitnessRings } from "@/components/activity/apple-fitness-rings";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { MealInput } from "@/lib/validations";
 import {
   UserProfile,
@@ -57,6 +59,12 @@ export function DashboardView({
   const todayStr = new Date().toISOString().split("T")[0];
   const todayReadings = glucoseReadings.filter((g) => g.date === todayStr);
   const latestReading = todayReadings[0] || glucoseReadings[0] || null;
+  const todayMeals = meals.filter((m) => m.date === todayStr);
+  const todayActs = activities.filter((a) => a.date === todayStr);
+  const todayMins = todayActs.reduce((sum, a) => sum + (a.durationMinutes || 0), 0);
+  const todaySteps = todayActs.reduce((sum, a) => sum + (a.steps || 0), 0);
+  const todayCals = Math.round(todayMins * 5.5 + todaySteps * 0.04);
+  const todayMedLogs = medicationLogs.filter((l) => l.scheduledAt.startsWith(todayStr));
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -89,15 +97,16 @@ export function DashboardView({
       {/* Top Greeting & Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             {getGreeting()}, {user.name.split(" ")[0]} 👋
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Here&apos;s your diabetes overview and daily care routine for today.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
+          <ThemeToggle />
           <Button
             onClick={() => setAddGlucoseOpen(true)}
             className="shadow-sm"
@@ -126,9 +135,10 @@ export function DashboardView({
         onOpenQuickAction={handleQuickAction}
       />
 
-      {/* Main Content Grid: Glucose Trend + Today's Plan */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div className="lg:col-span-2 space-y-6">
+      {/* Main Content Grid: Balanced 2-Column Responsive Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column (7 cols): Clinical Trend Chart & Smart Meal Suggester */}
+        <div className="lg:col-span-7 space-y-6">
           <GlucoseTrendChart
             readings={glucoseReadings}
             user={user}
@@ -136,19 +146,33 @@ export function DashboardView({
             title="Blood Glucose Trend"
           />
 
+          <SmartMealSuggester
+            rations={rations}
+            onCookAndLog={handleCookAndLog}
+            compact
+          />
+        </div>
+
+        {/* Right Column (5 cols): Apple Fitness Rings + Today's Plan + Upcoming Appointment */}
+        <div className="lg:col-span-5 space-y-6">
+          <AppleFitnessRings
+            activeCalories={todayCals || 380}
+            exerciseMinutes={todayMins || 25}
+            totalSteps={todaySteps || 6400}
+            compact
+          />
+
+          <TodayPlan
+            todayMeals={todayMeals}
+            todayReadings={todayReadings}
+            todayMedLogs={todayMedLogs}
+            todayActivities={todayActs}
+            onRefreshData={handleRefresh}
+          />
+
           <UpcomingAppointmentCard appointments={appointments} />
         </div>
-
-        <div className="lg:col-span-1 space-y-6">
-          <TodayPlan />
-        </div>
       </div>
-
-      {/* Smart Contextual Meal Suggester matching Monthly Rations & Working Schedule */}
-      <SmartMealSuggester
-        rations={rations}
-        onCookAndLog={handleCookAndLog}
-      />
 
       {/* Action Dialogs */}
       <AddGlucoseDialog

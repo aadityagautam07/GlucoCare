@@ -31,7 +31,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { DayModeType } from "@/types";
+import { DayModeType, Meal, GlucoseReading, MedicationLog, Activity } from "@/types";
 
 export interface ChecklistTask {
   id: string;
@@ -260,7 +260,21 @@ function playWebAudioChime() {
   }
 }
 
-export function TodayPlan() {
+export interface TodayPlanProps {
+  todayMeals?: Meal[];
+  todayReadings?: GlucoseReading[];
+  todayMedLogs?: MedicationLog[];
+  todayActivities?: Activity[];
+  onRefreshData?: () => void;
+}
+
+export function TodayPlan({
+  todayMeals = [],
+  todayReadings = [],
+  todayMedLogs = [],
+  todayActivities = [],
+  onRefreshData,
+}: TodayPlanProps = {}) {
   const [selectedDate, setSelectedDate] = React.useState<string>(() => {
     return new Date().toISOString().split("T")[0];
   });
@@ -371,6 +385,48 @@ export function TodayPlan() {
       .finally(() => setIsSyncing(false));
   };
 
+  // Auto-sync tasks from today's logged meals, activities, and medications
+  React.useEffect(() => {
+    if (!todayMeals.length && !todayActivities.length && !todayMedLogs.length) return;
+
+    setSections((prev) => {
+      const hasBreakfast = todayMeals.some((m) => m.mealType === "breakfast");
+      const hasLunch = todayMeals.some((m) => m.mealType === "lunch");
+      const hasDinner = todayMeals.some((m) => m.mealType === "dinner");
+      const hasWalk = todayActivities.some((a) => a.durationMinutes >= 15);
+      const hasMeds = todayMedLogs.some((l) => l.status === "taken");
+
+      let changed = false;
+      const updated = prev.map((sec) => ({
+        ...sec,
+        tasks: sec.tasks.map((task) => {
+          if (task.id === "m2" && hasBreakfast && !task.done) {
+            changed = true;
+            return { ...task, done: true, stamp: "✓ Logged in Meals" };
+          }
+          if (task.id === "d4" && hasLunch && !task.done) {
+            changed = true;
+            return { ...task, done: true, stamp: "✓ Logged in Meals" };
+          }
+          if (task.id === "e1" && hasDinner && !task.done) {
+            changed = true;
+            return { ...task, done: true, stamp: "✓ Logged in Meals" };
+          }
+          if (task.id === "m3" && hasWalk && !task.done) {
+            changed = true;
+            return { ...task, done: true, stamp: "✓ Logged in Activity" };
+          }
+          if (task.id === "e4" && hasMeds && !task.done) {
+            changed = true;
+            return { ...task, done: true, stamp: "✓ Dose Taken" };
+          }
+          return task;
+        }),
+      }));
+      return changed ? updated : prev;
+    });
+  }, [todayMeals, todayActivities, todayMedLogs]);
+
   // Toggle single task
   const handleToggleTask = (secId: string, taskId: string) => {
     const updated = sections.map((sec) => {
@@ -388,6 +444,50 @@ export function TodayPlan() {
             toast.success(`Completed: ${task.title}`);
             if (remindersEnabled) {
               playWebAudioChime();
+            }
+
+            // Cross-sync to respective logs
+            if (taskId === "m2" && !todayMeals.some((m) => m.mealType === "breakfast")) {
+              fetch("/api/meals", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  mealType: "breakfast",
+                  description: "High-Protein Breakfast: Besan / Moong Dal Chila",
+                  date: selectedDate,
+                  time: "08:15",
+                  carbohydrates: 25,
+                  protein: 16,
+                  calories: 300,
+                }),
+              }).then(() => onRefreshData?.());
+            } else if (taskId === "d4" && !todayMeals.some((m) => m.mealType === "lunch")) {
+              fetch("/api/meals", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  mealType: "lunch",
+                  description: "Balanced Lunch: Dal + Green Sabzi + Roti",
+                  date: selectedDate,
+                  time: "13:30",
+                  carbohydrates: 40,
+                  protein: 15,
+                  calories: 380,
+                }),
+              }).then(() => onRefreshData?.());
+            } else if (taskId === "m3" && !todayActivities.some((a) => a.durationMinutes >= 15)) {
+              fetch("/api/activities", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  activityType: "walking",
+                  durationMinutes: 30,
+                  steps: 3800,
+                  date: selectedDate,
+                  time: "09:00",
+                  notes: "Morning brisk walk recorded via Checklist",
+                }),
+              }).then(() => onRefreshData?.());
             }
           }
           return {

@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { HeartPulse, Plus, User, ShieldCheck } from "lucide-react";
 import { UserProfile } from "@/types";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 interface MobileHeaderProps {
   user?: UserProfile | null;
@@ -12,17 +13,18 @@ interface MobileHeaderProps {
 
 export function MobileHeader({ user, onOpenQuickAction }: MobileHeaderProps) {
   return (
-    <header className="lg:hidden sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur-md">
+    <header className="lg:hidden sticky top-0 z-20 flex h-14 items-center justify-between border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 px-4 backdrop-blur-md">
       <Link href="/dashboard" className="flex items-center gap-2">
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-700 to-teal-600 text-white shadow-xs">
           <HeartPulse className="h-4 w-4" />
         </div>
-        <span className="text-base font-bold tracking-tight text-slate-900">
-          Gluco<span className="text-teal-600">Care</span>
+        <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+          Gluco<span className="text-teal-600 dark:text-teal-400">Care</span>
         </span>
       </Link>
 
       <div className="flex items-center gap-2">
+        <ThemeToggle className="h-8 w-8" />
         {user?.role === "admin" && (
           <Link
             href="/admin"

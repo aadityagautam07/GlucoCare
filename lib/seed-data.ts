@@ -9,6 +9,7 @@ import {
   TodayPlanItem,
   RationItem,
   UserPermissions,
+  LabReport,
 } from "@/types";
 
 export const DEFAULT_PATIENT_PERMISSIONS: UserPermissions = {
@@ -727,6 +728,7 @@ export const demoAppointments: Appointment[] = [
     time: "10:30",
     location: "Riverside Endocrine Health, Suite 410",
     isVirtual: false,
+    reminderAlarm: "1h",
     notes: "Review 90-day glucose trends, HbA1c results, and routine kidney function panel.",
     completed: false,
     createdAt: "2024-02-01T10:00:00.000Z",
@@ -741,6 +743,7 @@ export const demoAppointments: Appointment[] = [
     time: "14:15",
     location: "Vision Specialists Center",
     isVirtual: false,
+    reminderAlarm: "2h",
     notes: "Pupil dilation planned. Bring sunglasses and arranged ride home.",
     completed: false,
     createdAt: "2024-02-05T11:00:00.000Z",
@@ -755,6 +758,7 @@ export const demoAppointments: Appointment[] = [
     time: "11:00",
     location: "Telehealth Video Call",
     isVirtual: true,
+    reminderAlarm: "15m",
     notes: "Discussed healthy complex carbohydrate substitutions and meal timing.",
     completed: true,
     createdAt: "2024-01-20T14:00:00.000Z",
@@ -811,4 +815,50 @@ export const demoTodayPlan: TodayPlanItem[] = [
     completed: false,
   },
 ];
+
+export const demoLabReports: LabReport[] = [
+  {
+    id: "rep-1",
+    userId: DEMO_USER_ID,
+    title: "Quarterly Comprehensive Metabolic & Glycated Hemoglobin (HbA1c) Panel",
+    doctorOrLab: "Metropolis Healthcare / Quest Diagnostics",
+    category: "hba1c",
+    date: getRelativeDateStr(14),
+    summaryMetrics: "HbA1c: 6.8% (Target < 7.0%), eAG: 148 mg/dL, Fasting Glucose: 112 mg/dL",
+    notes: "Significant positive trend compared to last quarter (was 7.4%). Microalbumin/Creatinine ratio normal.",
+    fileName: "Metropolis_HbA1c_CMP_Report.pdf",
+    fileSize: "1.4 MB",
+    fileType: "application/pdf",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "rep-2",
+    userId: DEMO_USER_ID,
+    title: "Lipid Profile & Cardiovascular Risk Evaluation",
+    doctorOrLab: "Thyrocare Technologies",
+    category: "lipid_panel",
+    date: getRelativeDateStr(35),
+    summaryMetrics: "Total Chol: 168 mg/dL, HDL: 48 mg/dL, LDL: 94 mg/dL, Triglycerides: 138 mg/dL",
+    notes: "Lipid fractions improved under active lifestyle and olive oil cooking routine.",
+    fileName: "Thyrocare_Lipid_Panel_Certified.pdf",
+    fileSize: "840 KB",
+    fileType: "application/pdf",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "rep-3",
+    userId: DEMO_USER_ID,
+    title: "Clinical Follow-up & Medication Prescription Slip",
+    doctorOrLab: "Dr. Sarah Jenkins, MD (Endocrinology)",
+    category: "prescription",
+    date: getRelativeDateStr(45),
+    summaryMetrics: "Metformin 500mg BID, Glipizide 5mg QD",
+    notes: "Maintain regular 30-min walking after dinner. Repeat HbA1c in 3 months.",
+    fileName: "DrJenkins_Rx_CarePlan.pdf",
+    fileSize: "520 KB",
+    fileType: "application/pdf",
+    createdAt: new Date().toISOString(),
+  },
+];
+
 
