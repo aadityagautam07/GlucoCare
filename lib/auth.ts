@@ -101,6 +101,16 @@ export function isAdmin(user: UserProfile | null | undefined): boolean {
   return Boolean(user && user.role === "admin" && user.status !== "suspended");
 }
 
+export function isDoctor(user: UserProfile | null | undefined): boolean {
+  return Boolean(user && user.role === "doctor" && user.status !== "suspended");
+}
+
+export function isDoctorOrAdmin(user: UserProfile | null | undefined): boolean {
+  return Boolean(
+    user && (user.role === "admin" || user.role === "doctor") && user.status !== "suspended"
+  );
+}
+
 export function isSuspended(user: UserProfile | null | undefined): boolean {
   return Boolean(user && user.status === "suspended");
 }

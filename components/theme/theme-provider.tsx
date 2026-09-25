@@ -30,9 +30,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const applyTheme = (isDark: boolean) => {
       if (isDark) {
         root.classList.add("dark");
+        if (typeof document !== "undefined" && document.body) {
+          document.body.classList.add("dark");
+        }
         setResolvedTheme("dark");
       } else {
         root.classList.remove("dark");
+        if (typeof document !== "undefined" && document.body) {
+          document.body.classList.remove("dark");
+        }
         setResolvedTheme("light");
       }
     };

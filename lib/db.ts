@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 import {
   demoUser,
   demoAdminUser,
@@ -50,7 +52,7 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
   const MONGODB_URI = process.env.MONGODB_URI;
 
   if (!MONGODB_URI) {
-    // In-memory demo mode active
+    // In-memory / file-backed demo mode active
     return null;
   }
 
@@ -65,7 +67,7 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
       })
       .then((m) => m)
       .catch((err) => {
-        console.warn("MongoDB connection failed, falling back to memory store:", err.message);
+        console.warn("MongoDB connection failed, falling back to persistent data store:", err.message);
         return null as unknown as typeof mongoose;
       });
   }
@@ -81,8 +83,15 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
 }
 
 // -------------------------------------------------------------
-// In-Memory Repository Store (Guarantees zero-friction offline/demo execution)
+// Persistent File-Backed Data Repository Store
+// Synchronizes across all Next.js worker threads and server reloads
 // -------------------------------------------------------------
+
+export interface ResetTokenRecord {
+  email: string;
+  token: string;
+  expiresAt: number;
+}
 
 interface InMemStore {
   users: Map<string, UserProfile & { passwordHash?: string }>;
@@ -95,60 +104,142 @@ interface InMemStore {
   rations: RationItem[];
   dailyLogs: DailyLogRecord[];
   labReports: LabReport[];
+  resetTokens: ResetTokenRecord[];
 }
 
 declare global {
   var memoryStore: InMemStore | undefined;
+  var lastLoadedDiskMtime: number | undefined;
+}
+
+const DATA_STORE_PATH = path.resolve(process.cwd(), "lib/data-store.json");
+
+function persistStoreToDisk() {
+  try {
+    const store = global.memoryStore;
+    if (!store) return;
+
+    const serialized = {
+      users: Array.from(store.users.values()),
+      glucose: store.glucose,
+      medications: store.medications,
+      medicationLogs: store.medicationLogs,
+      meals: store.meals,
+      activities: store.activities,
+      appointments: store.appointments,
+      rations: store.rations,
+      dailyLogs: store.dailyLogs,
+      labReports: store.labReports,
+      resetTokens: store.resetTokens || [],
+    };
+
+    fs.writeFileSync(DATA_STORE_PATH, JSON.stringify(serialized, null, 2), "utf-8");
+    if (fs.existsSync(DATA_STORE_PATH)) {
+      global.lastLoadedDiskMtime = fs.statSync(DATA_STORE_PATH).mtimeMs;
+    }
+  } catch (err) {
+    console.error("Failed to persist data store to disk:", err);
+  }
 }
 
 function getMemoryStore(): InMemStore {
-  if (!global.memoryStore) {
-    const userMap = new Map<string, UserProfile & { passwordHash?: string }>();
-
-    // Populate seed users
-    for (const seed of demoSeedUsers) {
-      userMap.set(seed.id, {
-        ...seed,
-        passwordHash: "$2a$10$wT282gY6E1G6v6hQ.q1j2uR4v6zQZ7yK1m0N3p5s9o4X8j7h6f5d2", // default hash
-      });
+  let fileMtime = 0;
+  try {
+    if (fs.existsSync(DATA_STORE_PATH)) {
+      fileMtime = fs.statSync(DATA_STORE_PATH).mtimeMs;
     }
+  } catch {
+    // ignore
+  }
 
-    // Load local admin accounts created via CLI if present
+  // If memoryStore exists and disk file has not been modified externally, return memory store
+  if (
+    global.memoryStore &&
+    global.lastLoadedDiskMtime &&
+    fileMtime <= global.lastLoadedDiskMtime
+  ) {
+    return global.memoryStore;
+  }
+
+  // Try loading from disk file if available
+  if (fs.existsSync(DATA_STORE_PATH)) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const fs = require("fs");
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const path = require("path");
-      const adminStorePath = path.resolve(process.cwd(), "lib/admin-store.json");
-      if (fs.existsSync(adminStorePath)) {
-        const localAdmins = JSON.parse(fs.readFileSync(adminStorePath, "utf-8"));
-        for (const a of localAdmins) {
-          userMap.set(a.id, a);
+      const content = fs.readFileSync(DATA_STORE_PATH, "utf-8");
+      const parsed = JSON.parse(content);
+      const userMap = new Map<string, UserProfile & { passwordHash?: string }>();
+
+      if (Array.isArray(parsed.users)) {
+        for (const u of parsed.users) {
+          userMap.set(u.id, u);
         }
       }
-    } catch {
-      // Ignore if not present
+
+      global.memoryStore = {
+        users: userMap,
+        glucose: Array.isArray(parsed.glucose) ? parsed.glucose : [],
+        medications: Array.isArray(parsed.medications) ? parsed.medications : [],
+        medicationLogs: Array.isArray(parsed.medicationLogs) ? parsed.medicationLogs : [],
+        meals: Array.isArray(parsed.meals) ? parsed.meals : [],
+        activities: Array.isArray(parsed.activities) ? parsed.activities : [],
+        appointments: Array.isArray(parsed.appointments) ? parsed.appointments : [],
+        rations: Array.isArray(parsed.rations) ? parsed.rations : [],
+        dailyLogs: Array.isArray(parsed.dailyLogs) ? parsed.dailyLogs : [],
+        labReports: Array.isArray(parsed.labReports) ? parsed.labReports : [],
+        resetTokens: Array.isArray(parsed.resetTokens) ? parsed.resetTokens : [],
+      };
+
+      global.lastLoadedDiskMtime = fileMtime;
+      return global.memoryStore;
+    } catch (err) {
+      console.error("Error reading data-store.json, creating initial store:", err);
     }
-
-
-    global.memoryStore = {
-      users: userMap,
-      glucose: [...demoGlucoseReadings],
-      medications: [...demoMedications],
-      medicationLogs: [...demoMedicationLogs],
-      meals: [...demoMeals],
-      activities: [...demoActivities],
-      appointments: [...demoAppointments],
-      rations: [...demoRationItems],
-      dailyLogs: [],
-      labReports: [...demoLabReports],
-    };
   }
+
+  // Otherwise initialize fresh from seed data
+  const userMap = new Map<string, UserProfile & { passwordHash?: string }>();
+
+  // Populate seed users
+  for (const seed of demoSeedUsers) {
+    userMap.set(seed.id, {
+      ...seed,
+      passwordHash: "$2a$10$wT282gY6E1G6v6hQ.q1j2uR4v6zQZ7yK1m0N3p5s9o4X8j7h6f5d2", // default demo hash
+    });
+  }
+
+  // Load local admin accounts created via CLI if present
+  try {
+    const adminStorePath = path.resolve(process.cwd(), "lib/admin-store.json");
+    if (fs.existsSync(adminStorePath)) {
+      const localAdmins = JSON.parse(fs.readFileSync(adminStorePath, "utf-8"));
+      for (const a of localAdmins) {
+        userMap.set(a.id, a);
+      }
+    }
+  } catch {
+    // Ignore if not present
+  }
+
+  global.memoryStore = {
+    users: userMap,
+    glucose: [...demoGlucoseReadings],
+    medications: [...demoMedications],
+    medicationLogs: [...demoMedicationLogs],
+    meals: [...demoMeals],
+    activities: [...demoActivities],
+    appointments: [...demoAppointments],
+    rations: [...demoRationItems],
+    dailyLogs: [],
+    labReports: [...demoLabReports],
+    resetTokens: [],
+  };
+
+  persistStoreToDisk();
   return global.memoryStore;
 }
 
 export const memoryDb = {
   getStore: getMemoryStore,
+  persist: persistStoreToDisk,
 
   // User
   getUserById(id: string): UserProfile | undefined {
@@ -173,6 +264,7 @@ export const memoryDb = {
   saveUser(user: UserProfile & { passwordHash?: string }) {
     const store = getMemoryStore();
     store.users.set(user.id, user);
+    persistStoreToDisk();
     return user;
   },
 
@@ -223,6 +315,7 @@ export const memoryDb = {
         : existing.permissions,
     };
     store.users.set(id, updated);
+    persistStoreToDisk();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...profile } = updated;
     return profile;
@@ -248,6 +341,7 @@ export const memoryDb = {
       },
     };
     store.users.set(id, updated);
+    persistStoreToDisk();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...profile } = updated;
     return profile;
@@ -264,6 +358,9 @@ export const memoryDb = {
       store.activities = store.activities.filter((a) => a.userId !== id);
       store.appointments = store.appointments.filter((a) => a.userId !== id);
       store.rations = store.rations.filter((r) => r.userId !== id);
+      store.dailyLogs = store.dailyLogs.filter((l) => l.userId !== id);
+      store.labReports = store.labReports.filter((r) => r.userId !== id);
+      persistStoreToDisk();
     }
     return deleted;
   },
@@ -286,6 +383,7 @@ export const memoryDb = {
   ensureUserStarterData(userId: string) {
     if (!userId) return;
     const store = getMemoryStore();
+    let hasChanges = false;
 
     // Starter glucose
     const hasGlucose = store.glucose.some((g) => g.userId === userId);
@@ -296,6 +394,7 @@ export const memoryDb = {
         userId,
       }));
       store.glucose.push(...clonedGlucose);
+      hasChanges = true;
     }
 
     // Starter medications
@@ -315,6 +414,7 @@ export const memoryDb = {
         medicationId: `med-${userId}-0`,
       }));
       store.medicationLogs.push(...clonedLogs);
+      hasChanges = true;
     }
 
     // Starter meals
@@ -326,6 +426,7 @@ export const memoryDb = {
         userId,
       }));
       store.meals.push(...clonedMeals);
+      hasChanges = true;
     }
 
     // Starter activities
@@ -337,6 +438,7 @@ export const memoryDb = {
         userId,
       }));
       store.activities.push(...clonedActs);
+      hasChanges = true;
     }
 
     // Starter appointments
@@ -348,6 +450,7 @@ export const memoryDb = {
         userId,
       }));
       store.appointments.push(...clonedAppts);
+      hasChanges = true;
     }
 
     // Starter rations
@@ -359,6 +462,7 @@ export const memoryDb = {
         userId,
       }));
       store.rations.push(...clonedRations);
+      hasChanges = true;
     }
 
     // Starter lab & diagnostic reports
@@ -370,6 +474,11 @@ export const memoryDb = {
         userId,
       }));
       store.labReports.push(...clonedReports);
+      hasChanges = true;
+    }
+
+    if (hasChanges) {
+      persistStoreToDisk();
     }
   },
 
@@ -385,6 +494,7 @@ export const memoryDb = {
   addGlucoseReading(reading: GlucoseReading): GlucoseReading {
     const store = getMemoryStore();
     store.glucose.unshift(reading);
+    persistStoreToDisk();
     return reading;
   },
 
@@ -397,6 +507,7 @@ export const memoryDb = {
       ...updates,
       updatedAt: new Date().toISOString(),
     };
+    persistStoreToDisk();
     return store.glucose[index];
   },
 
@@ -404,7 +515,9 @@ export const memoryDb = {
     const store = getMemoryStore();
     const initialLen = store.glucose.length;
     store.glucose = store.glucose.filter((g) => !(g.id === id && g.userId === userId));
-    return store.glucose.length < initialLen;
+    const changed = store.glucose.length < initialLen;
+    if (changed) persistStoreToDisk();
+    return changed;
   },
 
   // Medications
@@ -417,6 +530,7 @@ export const memoryDb = {
   addMedication(med: Medication): Medication {
     const store = getMemoryStore();
     store.medications.push(med);
+    persistStoreToDisk();
     return med;
   },
 
@@ -429,6 +543,7 @@ export const memoryDb = {
       ...updates,
       updatedAt: new Date().toISOString(),
     };
+    persistStoreToDisk();
     return store.medications[index];
   },
 
@@ -436,7 +551,9 @@ export const memoryDb = {
     const store = getMemoryStore();
     const initialLen = store.medications.length;
     store.medications = store.medications.filter((m) => !(m.id === id && m.userId === userId));
-    return store.medications.length < initialLen;
+    const changed = store.medications.length < initialLen;
+    if (changed) persistStoreToDisk();
+    return changed;
   },
 
   // Medication Logs
@@ -451,6 +568,7 @@ export const memoryDb = {
   addMedicationLog(log: MedicationLog): MedicationLog {
     const store = getMemoryStore();
     store.medicationLogs.unshift(log);
+    persistStoreToDisk();
     return log;
   },
 
@@ -474,6 +592,7 @@ export const memoryDb = {
       }
     }
 
+    persistStoreToDisk();
     return meal;
   },
 
@@ -490,6 +609,7 @@ export const memoryDb = {
     }
 
     store.meals = store.meals.filter((m) => m.id !== id);
+    persistStoreToDisk();
     return true;
   },
 
@@ -505,6 +625,7 @@ export const memoryDb = {
   addActivity(act: Activity): Activity {
     const store = getMemoryStore();
     store.activities.unshift(act);
+    persistStoreToDisk();
     return act;
   },
 
@@ -512,7 +633,9 @@ export const memoryDb = {
     const store = getMemoryStore();
     const len = store.activities.length;
     store.activities = store.activities.filter((a) => !(a.id === id && a.userId === userId));
-    return store.activities.length < len;
+    const changed = store.activities.length < len;
+    if (changed) persistStoreToDisk();
+    return changed;
   },
 
   // Appointments
@@ -527,6 +650,7 @@ export const memoryDb = {
   addAppointment(app: Appointment): Appointment {
     const store = getMemoryStore();
     store.appointments.push(app);
+    persistStoreToDisk();
     return app;
   },
 
@@ -538,6 +662,7 @@ export const memoryDb = {
       ...store.appointments[index],
       ...updates,
     };
+    persistStoreToDisk();
     return store.appointments[index];
   },
 
@@ -545,7 +670,9 @@ export const memoryDb = {
     const store = getMemoryStore();
     const len = store.appointments.length;
     store.appointments = store.appointments.filter((a) => !(a.id === id && a.userId === userId));
-    return store.appointments.length < len;
+    const changed = store.appointments.length < len;
+    if (changed) persistStoreToDisk();
+    return changed;
   },
 
   // Rations
@@ -565,6 +692,7 @@ export const memoryDb = {
   addRation(ration: RationItem): RationItem {
     const store = getMemoryStore();
     store.rations.push(ration);
+    persistStoreToDisk();
     return ration;
   },
 
@@ -577,6 +705,7 @@ export const memoryDb = {
       ...updates,
       updatedAt: new Date().toISOString(),
     };
+    persistStoreToDisk();
     return store.rations[idx];
   },
 
@@ -584,7 +713,9 @@ export const memoryDb = {
     const store = getMemoryStore();
     const len = store.rations.length;
     store.rations = store.rations.filter((r) => !(r.id === id && r.userId === userId));
-    return store.rations.length < len;
+    const changed = store.rations.length < len;
+    if (changed) persistStoreToDisk();
+    return changed;
   },
 
   deductRation(rationId: string, userId: string, quantity: number): boolean {
@@ -593,6 +724,7 @@ export const memoryDb = {
     if (!item) return false;
     item.usedQuantity = Math.max(0, Number((item.usedQuantity + quantity).toFixed(2)));
     item.updatedAt = new Date().toISOString();
+    persistStoreToDisk();
     return true;
   },
 
@@ -602,6 +734,7 @@ export const memoryDb = {
     if (!item) return false;
     item.usedQuantity = Math.max(0, Number((item.usedQuantity - quantity).toFixed(2)));
     item.updatedAt = new Date().toISOString();
+    persistStoreToDisk();
     return true;
   },
 
@@ -615,22 +748,26 @@ export const memoryDb = {
     const store = getMemoryStore();
     const idx = store.dailyLogs.findIndex((l) => l.userId === log.userId && l.date === log.date);
     const now = new Date().toISOString();
+    let result: DailyLogRecord;
     if (idx >= 0) {
       store.dailyLogs[idx] = {
         ...store.dailyLogs[idx],
         ...log,
         updatedAt: now,
       };
-      return store.dailyLogs[idx];
+      result = store.dailyLogs[idx];
+    } else {
+      const newLog = {
+        ...log,
+        id: log.id || `daily-log-${Date.now()}`,
+        createdAt: now,
+        updatedAt: now,
+      };
+      store.dailyLogs.push(newLog);
+      result = newLog;
     }
-    const newLog = {
-      ...log,
-      id: log.id || `daily-log-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now,
-    };
-    store.dailyLogs.push(newLog);
-    return newLog;
+    persistStoreToDisk();
+    return result;
   },
 
   getDailyLogs(userId: string, limit = 30): DailyLogRecord[] {
@@ -653,6 +790,7 @@ export const memoryDb = {
   addLabReport(report: LabReport): LabReport {
     const store = getMemoryStore();
     store.labReports.unshift(report);
+    persistStoreToDisk();
     return report;
   },
 
@@ -660,8 +798,122 @@ export const memoryDb = {
     const store = getMemoryStore();
     const len = store.labReports.length;
     store.labReports = store.labReports.filter((r) => !(r.id === id && r.userId === userId));
-    return store.labReports.length < len;
+    const changed = store.labReports.length < len;
+    if (changed) persistStoreToDisk();
+    return changed;
+  },
+
+  // Password Reset Tokens
+  saveResetToken(email: string, token: string, expiresInMs = 60 * 60 * 1000): void {
+    const store = getMemoryStore();
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!store.resetTokens) store.resetTokens = [];
+    store.resetTokens = store.resetTokens.filter(
+      (r) => r.email !== normalizedEmail && r.expiresAt > Date.now()
+    );
+    store.resetTokens.push({
+      email: normalizedEmail,
+      token,
+      expiresAt: Date.now() + expiresInMs,
+    });
+    persistStoreToDisk();
+  },
+
+  verifyResetToken(email: string, token: string): boolean {
+    const store = getMemoryStore();
+    const normalizedEmail = email.toLowerCase().trim();
+    const found = store.resetTokens?.find(
+      (r) => r.email === normalizedEmail && r.token === token && r.expiresAt > Date.now()
+    );
+    return Boolean(found);
+  },
+
+  consumeResetToken(email: string, token: string): boolean {
+    const store = getMemoryStore();
+    const normalizedEmail = email.toLowerCase().trim();
+    const idx = store.resetTokens?.findIndex(
+      (r) => r.email === normalizedEmail && r.token === token && r.expiresAt > Date.now()
+    );
+    if (idx !== undefined && idx >= 0) {
+      store.resetTokens.splice(idx, 1);
+      persistStoreToDisk();
+      return true;
+    }
+    return false;
+  },
+
+  // Doctor Clinical Portal: Patient Full Clinical Dossier
+  getPatientFullDossier(patientId: string) {
+    this.ensureUserStarterData(patientId);
+    const store = getMemoryStore();
+    const user = this.getUserById(patientId);
+    if (!user) return null;
+
+    const glucose = store.glucose
+      .filter((g) => g.userId === patientId)
+      .sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
+
+    const medications = store.medications.filter((m) => m.userId === patientId);
+    const medicationLogs = store.medicationLogs
+      .filter((l) => l.userId === patientId)
+      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
+
+    const meals = store.meals
+      .filter((m) => m.userId === patientId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const activities = store.activities
+      .filter((a) => a.userId === patientId)
+      .sort((a, b) => new Date(b.date + "T" + b.time).getTime() - new Date(a.date + "T" + a.time).getTime());
+
+    const appointments = store.appointments
+      .filter((a) => a.userId === patientId)
+      .sort((a, b) => new Date(a.date + "T" + a.time).getTime() - new Date(b.date + "T" + b.time).getTime());
+
+    const rations = store.rations
+      .filter((r) => r.userId === patientId)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const dailyLogs = store.dailyLogs
+      .filter((l) => l.userId === patientId)
+      .sort((a, b) => b.date.localeCompare(a.date));
+
+    const labReports = store.labReports
+      .filter((r) => r.userId === patientId)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const totalReadings = glucose.length;
+    const avgGlucose = totalReadings > 0
+      ? Math.round(glucose.reduce((acc, g) => acc + g.value, 0) / totalReadings)
+      : 0;
+    const totalMinsActive = activities.reduce((acc, a) => acc + (a.durationMinutes || 0), 0);
+    const totalSteps = activities.reduce((acc, a) => acc + (a.steps || 0), 0);
+    const adherenceLogs = dailyLogs.slice(0, 14);
+    const avgAdherence = adherenceLogs.length > 0
+      ? Math.round(adherenceLogs.reduce((acc, l) => acc + (l.adherencePercentage || 0), 0) / adherenceLogs.length)
+      : 85;
+
+    return {
+      user,
+      glucose,
+      medications,
+      medicationLogs,
+      meals,
+      activities,
+      appointments,
+      rations,
+      dailyLogs,
+      labReports,
+      metrics: {
+        totalReadings,
+        avgGlucose,
+        totalMinsActive,
+        totalSteps,
+        avgAdherence,
+        activeMedsCount: medications.length,
+        mealsLoggedCount: meals.length,
+        labReportsCount: labReports.length,
+      },
+    };
   },
 };
-
-

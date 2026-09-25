@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { ReportsView } from "@/components/reports/reports-view";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function ReportsPage() {
   const user = await getSessionUser();
   if (!user) {
@@ -24,4 +27,3 @@ export default async function ReportsPage() {
     />
   );
 }
-

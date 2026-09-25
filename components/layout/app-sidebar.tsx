@@ -124,12 +124,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </nav>
         </div>
 
-        {user?.role === "admin" && (
+        {(user?.role === "admin" || user?.role === "doctor") && (
           <div>
-            <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-purple-700 flex items-center justify-between">
-              <span>Governance</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 text-purple-800">
-                PRO
+            <div className="px-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center justify-between">
+              <span>{user?.role === "doctor" ? "Clinical Portal" : "Governance"}</span>
+              <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 font-bold">
+                {user?.role === "doctor" ? "DOCTOR" : "ADMIN"}
               </span>
             </div>
             <nav className="space-y-1">
@@ -138,14 +138,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 className={cn(
                   "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150",
                   pathname?.startsWith("/admin")
-                    ? "bg-purple-50 text-purple-900 border border-purple-200/80 shadow-xs"
-                    : "text-purple-700 hover:bg-purple-50/70"
+                    ? "bg-purple-50 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 border border-purple-200/80 dark:border-purple-800 shadow-xs"
+                    : "text-purple-700 dark:text-purple-400 hover:bg-purple-50/70 dark:hover:bg-purple-950/30"
                 )}
               >
-                <ShieldCheck className="h-4 w-4 shrink-0 text-purple-600" />
-                <span>Admin Portal</span>
-                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-purple-200/70 text-purple-900 uppercase tracking-wider">
-                  Admin
+                <ShieldCheck className="h-4 w-4 shrink-0 text-purple-600 dark:text-purple-400" />
+                <span>{user?.role === "doctor" ? "Patient Logs Portal" : "Admin Portal"}</span>
+                <span className="ml-auto text-[10px] px-1.5 py-0.5 rounded-md font-bold bg-purple-200/70 dark:bg-purple-900/60 text-purple-900 dark:text-purple-200 uppercase tracking-wider">
+                  {user?.role === "doctor" ? "Doctor" : "Admin"}
                 </span>
               </Link>
             </nav>

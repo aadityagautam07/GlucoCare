@@ -18,11 +18,38 @@ interface GlucoseViewProps {
 
 export function GlucoseView({ user, readings }: GlucoseViewProps) {
   const router = useRouter();
+  const [readingList, setReadingList] = React.useState<GlucoseReading[]>(readings);
   const [addModalOpen, setAddModalOpen] = React.useState(false);
   const [editingReading, setEditingReading] = React.useState<GlucoseReading | null>(null);
 
-  const handleRefresh = () => {
+  React.useEffect(() => {
+    setReadingList(readings);
+  }, [readings]);
+
+  const fetchReadings = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/glucose");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.readings)) {
+          setReadingList(data.readings);
+        }
+      }
+    } catch {
+      // quiet fallback
+    }
+  }, []);
+
+  const handleRefresh = React.useCallback(() => {
+    fetchReadings();
     router.refresh();
+  }, [fetchReadings, router]);
+
+  const handleReadingCreated = (newReading?: GlucoseReading) => {
+    if (newReading) {
+      setReadingList((prev) => [newReading, ...prev.filter((r) => r.id !== newReading.id)]);
+    }
+    handleRefresh();
   };
 
   return (
@@ -30,10 +57,10 @@ export function GlucoseView({ user, readings }: GlucoseViewProps) {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
             Blood Glucose Tracking
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Log and review your blood sugar readings across fasting, meals, and bedtime.
           </p>
         </div>
@@ -45,11 +72,11 @@ export function GlucoseView({ user, readings }: GlucoseViewProps) {
       </div>
 
       {/* Summary Stat Cards */}
-      <GlucoseStatsCards readings={readings} user={user} />
+      <GlucoseStatsCards readings={readingList} user={user} />
 
       {/* Large Interactive Trend Chart */}
       <GlucoseTrendChart
-        readings={readings}
+        readings={readingList}
         user={user}
         onAddReading={() => setAddModalOpen(true)}
         title="Interactive Blood Glucose Log"
@@ -57,11 +84,11 @@ export function GlucoseView({ user, readings }: GlucoseViewProps) {
 
       {/* Recent Readings History Table */}
       <div className="space-y-3">
-        <h2 className="text-lg font-bold text-slate-900">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
           Readings History
         </h2>
         <GlucoseTable
-          readings={readings}
+          readings={readingList}
           user={user}
           onRefresh={handleRefresh}
           onEditReading={(r) => setEditingReading(r)}
@@ -73,7 +100,7 @@ export function GlucoseView({ user, readings }: GlucoseViewProps) {
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
         defaultUnit={user.glucoseUnit}
-        onSuccess={handleRefresh}
+        onSuccess={handleReadingCreated}
       />
 
       {/* Edit Reading Dialog */}
@@ -85,4 +112,3 @@ export function GlucoseView({ user, readings }: GlucoseViewProps) {
     </div>
   );
 }
-

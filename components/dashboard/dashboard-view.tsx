@@ -50,6 +50,20 @@ export function DashboardView({
   rations = [],
 }: DashboardViewProps) {
   const router = useRouter();
+
+  // Local active state to guarantee instant UI reflection
+  const [glucoseList, setGlucoseList] = React.useState<GlucoseReading[]>(glucoseReadings);
+  const [medList, setMedList] = React.useState<Medication[]>(medications);
+  const [medLogList, setMedLogList] = React.useState<MedicationLog[]>(medicationLogs);
+  const [mealList, setMealList] = React.useState<Meal[]>(meals);
+  const [actList, setActList] = React.useState<Activity[]>(activities);
+
+  React.useEffect(() => { setGlucoseList(glucoseReadings); }, [glucoseReadings]);
+  React.useEffect(() => { setMedList(medications); }, [medications]);
+  React.useEffect(() => { setMedLogList(medicationLogs); }, [medicationLogs]);
+  React.useEffect(() => { setMealList(meals); }, [meals]);
+  React.useEffect(() => { setActList(activities); }, [activities]);
+
   const [addGlucoseOpen, setAddGlucoseOpen] = React.useState(false);
   const [addMedOpen, setAddMedOpen] = React.useState(false);
   const [addMealOpen, setAddMealOpen] = React.useState(false);
@@ -57,14 +71,14 @@ export function DashboardView({
   const [addActOpen, setAddActOpen] = React.useState(false);
 
   const todayStr = new Date().toISOString().split("T")[0];
-  const todayReadings = glucoseReadings.filter((g) => g.date === todayStr);
-  const latestReading = todayReadings[0] || glucoseReadings[0] || null;
-  const todayMeals = meals.filter((m) => m.date === todayStr);
-  const todayActs = activities.filter((a) => a.date === todayStr);
+  const todayReadings = glucoseList.filter((g) => g.date === todayStr);
+  const latestReading = todayReadings[0] || glucoseList[0] || null;
+  const todayMeals = mealList.filter((m) => m.date === todayStr);
+  const todayActs = actList.filter((a) => a.date === todayStr);
   const todayMins = todayActs.reduce((sum, a) => sum + (a.durationMinutes || 0), 0);
   const todaySteps = todayActs.reduce((sum, a) => sum + (a.steps || 0), 0);
   const todayCals = Math.round(todayMins * 5.5 + todaySteps * 0.04);
-  const todayMedLogs = medicationLogs.filter((l) => l.scheduledAt.startsWith(todayStr));
+  const todayMedLogs = medLogList.filter((l) => l.scheduledAt.startsWith(todayStr));
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -73,9 +87,40 @@ export function DashboardView({
     return "Good evening";
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = React.useCallback(async () => {
+    try {
+      const [gluRes, mealRes, actRes, medRes, logRes] = await Promise.all([
+        fetch("/api/glucose"),
+        fetch("/api/meals"),
+        fetch("/api/activities"),
+        fetch("/api/medications"),
+        fetch("/api/medication-logs"),
+      ]);
+      if (gluRes.ok) {
+        const d = await gluRes.json();
+        if (Array.isArray(d.readings)) setGlucoseList(d.readings);
+      }
+      if (mealRes.ok) {
+        const d = await mealRes.json();
+        if (Array.isArray(d.meals)) setMealList(d.meals);
+      }
+      if (actRes.ok) {
+        const d = await actRes.json();
+        if (Array.isArray(d.activities)) setActList(d.activities);
+      }
+      if (medRes.ok) {
+        const d = await medRes.json();
+        if (Array.isArray(d.medications)) setMedList(d.medications);
+      }
+      if (logRes.ok) {
+        const d = await logRes.json();
+        if (Array.isArray(d.logs)) setMedLogList(d.logs);
+      }
+    } catch {
+      // quiet fallback
+    }
     router.refresh();
-  };
+  }, [router]);
 
   const handleQuickAction = (type: "glucose" | "medication" | "meal" | "activity") => {
     if (type === "glucose") setAddGlucoseOpen(true);
@@ -126,11 +171,11 @@ export function DashboardView({
 
       {/* 4 Stat Cards */}
       <StatGrid
-        glucoseReadings={glucoseReadings}
-        medications={medications}
-        medicationLogs={medicationLogs}
-        meals={meals}
-        activities={activities}
+        glucoseReadings={glucoseList}
+        medications={medList}
+        medicationLogs={medLogList}
+        meals={mealList}
+        activities={actList}
         user={user}
         onOpenQuickAction={handleQuickAction}
       />
@@ -140,7 +185,7 @@ export function DashboardView({
         {/* Left Column (7 cols): Clinical Trend Chart & Smart Meal Suggester */}
         <div className="lg:col-span-7 space-y-6">
           <GlucoseTrendChart
-            readings={glucoseReadings}
+            readings={glucoseList}
             user={user}
             onAddReading={() => setAddGlucoseOpen(true)}
             title="Blood Glucose Trend"
@@ -179,7 +224,12 @@ export function DashboardView({
         open={addGlucoseOpen}
         onOpenChange={setAddGlucoseOpen}
         defaultUnit={user.glucoseUnit}
-        onSuccess={handleRefresh}
+        onSuccess={(newReading) => {
+          if (newReading) {
+            setGlucoseList((prev) => [newReading, ...prev.filter((g) => g.id !== newReading.id)]);
+          }
+          handleRefresh();
+        }}
       />
 
       <AddMedicationDialog
@@ -196,15 +246,24 @@ export function DashboardView({
         }}
         initialData={prefilledMeal}
         availableRations={rations}
-        onSuccess={handleRefresh}
+        onSuccess={(newMeal) => {
+          if (newMeal) {
+            setMealList((prev) => [newMeal, ...prev.filter((m) => m.id !== newMeal.id)]);
+          }
+          handleRefresh();
+        }}
       />
 
       <AddActivityDialog
         open={addActOpen}
         onOpenChange={setAddActOpen}
-        onSuccess={handleRefresh}
+        onSuccess={(newAct) => {
+          if (newAct) {
+            setActList((prev) => [newAct, ...prev.filter((a) => a.id !== newAct.id)]);
+          }
+          handleRefresh();
+        }}
       />
     </div>
   );
 }
-

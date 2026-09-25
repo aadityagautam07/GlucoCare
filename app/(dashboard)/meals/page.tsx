@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { MealsView } from "@/components/meals/meals-view";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function MealsPage() {
   const user = await getSessionUser();
   if (!user) {

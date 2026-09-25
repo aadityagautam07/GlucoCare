@@ -25,7 +25,7 @@ interface AddMealDialogProps {
   onOpenChange: (open: boolean) => void;
   initialData?: Partial<MealInput>;
   availableRations?: RationItem[];
-  onSuccess?: () => void;
+  onSuccess?: (meal?: Meal) => void;
 }
 
 function AddMealForm({
@@ -37,7 +37,7 @@ function AddMealForm({
   initialData?: Partial<MealInput>;
   availableRations?: RationItem[];
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (meal?: Meal) => void;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -124,12 +124,13 @@ function AddMealForm({
 
       if (!res.ok) throw new Error("Failed to record meal");
 
+      const json = await res.json();
       toast.success("Meal logged successfully", {
         description: `${data.mealType.toUpperCase()}: ${data.description}`,
       });
 
       onClose();
-      onSuccess?.();
+      onSuccess?.(json.meal);
     } catch {
       toast.error("Failed to save meal. Please try again.");
     } finally {

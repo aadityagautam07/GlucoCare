@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { MedicationsView } from "@/components/medications/medications-view";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function MedicationsPage() {
   const user = await getSessionUser();
   if (!user) {
@@ -14,4 +17,3 @@ export default async function MedicationsPage() {
 
   return <MedicationsView medications={medications} medicationLogs={medicationLogs} />;
 }
-

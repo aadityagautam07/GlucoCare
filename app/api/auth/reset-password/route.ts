@@ -4,7 +4,7 @@ import { hashPassword } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
-    const { email, newPassword } = await req.json();
+    const { email, newPassword, token } = await req.json();
 
     if (!email || typeof email !== "string" || !newPassword || typeof newPassword !== "string") {
       return NextResponse.json(
@@ -28,6 +28,17 @@ export async function POST(req: Request) {
       );
     }
 
+    // Verify token if supplied
+    if (token) {
+      const isValid = memoryDb.verifyResetToken(trimmedEmail, token);
+      if (!isValid) {
+        return NextResponse.json(
+          { error: "Invalid or expired security code. Please request a new reset email." },
+          { status: 400 }
+        );
+      }
+    }
+
     const user = memoryDb.getUserByEmail(trimmedEmail);
     if (!user) {
       return NextResponse.json(
@@ -40,9 +51,14 @@ export async function POST(req: Request) {
     user.passwordHash = newHash;
     memoryDb.saveUser(user);
 
+    // Consume token if it was provided
+    if (token) {
+      memoryDb.consumeResetToken(trimmedEmail, token);
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Password updated for ${user.name}. You can now sign in with your new password.`,
+      message: `Password updated for ${user.name}. You can now sign in with your new credentials.`,
     });
   } catch (error) {
     console.error("POST /api/auth/reset-password error:", error);

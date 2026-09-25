@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { InsightCards } from "@/components/insights/insight-cards";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function InsightsPage() {
   const user = await getSessionUser();
   if (!user) {

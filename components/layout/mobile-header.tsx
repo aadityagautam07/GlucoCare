@@ -25,14 +25,14 @@ export function MobileHeader({ user, onOpenQuickAction }: MobileHeaderProps) {
 
       <div className="flex items-center gap-2">
         <ThemeToggle className="h-8 w-8" />
-        {user?.role === "admin" && (
+        {(user?.role === "admin" || user?.role === "doctor") && (
           <Link
             href="/admin"
-            className="flex h-8 items-center gap-1 px-2 rounded-lg bg-purple-100 text-purple-800 text-[11px] font-bold hover:bg-purple-200 transition-colors"
-            title="Admin Portal"
+            className="flex h-8 items-center gap-1 px-2 rounded-lg bg-purple-100 dark:bg-purple-950/60 text-purple-800 dark:text-purple-300 text-[11px] font-bold hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors"
+            title={user?.role === "doctor" ? "Clinical Patient Portal" : "Admin Portal"}
           >
-            <ShieldCheck className="h-3.5 w-3.5 text-purple-700" />
-            <span>Admin</span>
+            <ShieldCheck className="h-3.5 w-3.5 text-purple-700 dark:text-purple-400" />
+            <span>{user?.role === "doctor" ? "Doctor" : "Admin"}</span>
           </Link>
         )}
 

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, isAdmin } from "@/lib/auth";
+import { getSessionUser, isAdmin, isDoctorOrAdmin } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { UserRole, UserStatus, UserPermissions } from "@/types";
 
@@ -9,31 +9,33 @@ export async function GET(
 ) {
   try {
     const sessionUser = await getSessionUser();
-    if (!isAdmin(sessionUser)) {
+    if (!isDoctorOrAdmin(sessionUser)) {
       return NextResponse.json(
-        { error: "Forbidden: Administrator privileges required" },
+        { error: "Forbidden: Clinical or Administrator privileges required" },
         { status: 403 }
       );
     }
 
     const { id } = await params;
-    const user = memoryDb.getUserById(id);
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    const dossier = memoryDb.getPatientFullDossier(id);
+    if (!dossier) {
+      return NextResponse.json({ error: "Patient record not found" }, { status: 404 });
     }
 
-    const readings = memoryDb.getGlucoseReadings(id).slice(0, 10);
-    const medications = memoryDb.getMedications(id);
-    const meals = memoryDb.getMeals(id).slice(0, 10);
-    const rations = memoryDb.getRations(id);
-
     return NextResponse.json({
-      user,
+      user: dossier.user,
+      dossier,
       recentActivity: {
-        readings,
-        medications,
-        meals,
-        rations,
+        readings: dossier.glucose,
+        medications: dossier.medications,
+        medicationLogs: dossier.medicationLogs,
+        meals: dossier.meals,
+        activities: dossier.activities,
+        appointments: dossier.appointments,
+        rations: dossier.rations,
+        dailyLogs: dossier.dailyLogs,
+        labReports: dossier.labReports,
+        metrics: dossier.metrics,
       },
     });
   } catch (error) {

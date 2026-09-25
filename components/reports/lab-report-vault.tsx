@@ -600,3 +600,4 @@ export function LabReportVault({ initialReports }: LabReportVaultProps) {
     </div>
   );
 }
+

@@ -8,7 +8,7 @@ import {
   UserCheck,
   UserX,
   Stethoscope,
-  Activity,
+  Activity as ActivityIcon,
   Search,
   Filter,
   RefreshCw,
@@ -19,27 +19,89 @@ import {
   CheckCircle2,
   AlertCircle,
   FileSpreadsheet,
+  Utensils,
+  Pill,
+  Footprints,
+  Calendar,
+  FileText,
+  Clock,
+  TrendingUp,
+  X,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
-import { AdminUserSummary, AdminSystemStats, UserRole, UserStatus } from "@/types";
+import {
+  AdminUserSummary,
+  AdminSystemStats,
+  UserRole,
+  UserStatus,
+  UserProfile,
+  GlucoseReading,
+  Medication,
+  MedicationLog,
+  Meal,
+  Activity,
+  Appointment,
+  RationItem,
+  DailyLogRecord,
+  LabReport,
+} from "@/types";
 import { UserPermissionsDialog } from "./user-permissions-dialog";
 import { CreateUserDialog } from "./create-user-dialog";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { formatDate, formatTime } from "@/lib/utils";
 
-
-interface PatientInspectData {
-  user: AdminUserSummary;
+interface PatientDossierResponse {
+  user: UserProfile;
+  dossier: {
+    user: UserProfile;
+    glucose: GlucoseReading[];
+    medications: Medication[];
+    medicationLogs: MedicationLog[];
+    meals: Meal[];
+    activities: Activity[];
+    appointments: Appointment[];
+    rations: RationItem[];
+    dailyLogs: DailyLogRecord[];
+    labReports: LabReport[];
+    metrics: {
+      totalReadings: number;
+      avgGlucose: number;
+      totalMinsActive: number;
+      totalSteps: number;
+      avgAdherence: number;
+      activeMedsCount: number;
+      mealsLoggedCount: number;
+      labReportsCount: number;
+    };
+  };
   recentActivity: {
-    readings: Array<{ id: string; value: number; unit: string; context: string; date: string; time: string }>;
-    medications: Array<{ id: string; name: string; dosage: string; frequency: string }>;
-    meals: Array<{ id: string; mealType: string; description: string; date: string }>;
-    rations: Array<{ id: string; name: string; allocatedQuantity: number; usedQuantity: number; unit: string }>;
+    readings: GlucoseReading[];
+    medications: Medication[];
+    medicationLogs: MedicationLog[];
+    meals: Meal[];
+    activities: Activity[];
+    appointments: Appointment[];
+    rations: RationItem[];
+    dailyLogs: DailyLogRecord[];
+    labReports: LabReport[];
+    metrics: {
+      totalReadings: number;
+      avgGlucose: number;
+      totalMinsActive: number;
+      totalSteps: number;
+      avgAdherence: number;
+      activeMedsCount: number;
+      mealsLoggedCount: number;
+      labReportsCount: number;
+    };
   };
 }
 
-export function AdminView() {
+export function AdminView({ currentUser }: { currentUser?: UserProfile | null }) {
   const [users, setUsers] = React.useState<AdminUserSummary[]>([]);
   const [stats, setStats] = React.useState<AdminSystemStats | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -53,12 +115,17 @@ export function AdminView() {
   const [createUserDialogOpen, setCreateUserDialogOpen] = React.useState(false);
 
   // Patient inspector state
-  const [inspectedPatient, setInspectedPatient] = React.useState<PatientInspectData | null>(null);
+  const [inspectedPatient, setInspectedPatient] = React.useState<PatientDossierResponse | null>(null);
   const [inspectLoading, setInspectLoading] = React.useState(false);
+  const [inspectActiveTab, setInspectActiveTab] = React.useState<
+    "overview" | "glucose" | "meals" | "medications" | "activity" | "routines" | "reports"
+  >("overview");
 
   // Delete dialog state
   const [deleteUserId, setDeleteUserId] = React.useState<string | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+
+  const isDoctorUser = currentUser?.role === "doctor";
 
   const fetchUsersAndStats = React.useCallback(async () => {
     try {
@@ -83,9 +150,10 @@ export function AdminView() {
 
   const handleInspectUser = async (user: AdminUserSummary) => {
     setInspectLoading(true);
+    setInspectActiveTab("overview");
     try {
       const res = await fetch(`/api/admin/users/${user.id}`);
-      if (!res.ok) throw new Error("Failed to load user activity");
+      if (!res.ok) throw new Error("Failed to load user activity dossier");
       const data = await res.json();
       setInspectedPatient(data);
     } catch (err) {
@@ -101,329 +169,338 @@ export function AdminView() {
       const res = await fetch(`/api/admin/users/${deleteUserId}`, {
         method: "DELETE",
       });
-      const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to delete user");
+        throw new Error("Failed to delete user account");
       }
-      toast.success("User removed successfully");
-      if (inspectedPatient?.user.id === deleteUserId) {
-        setInspectedPatient(null);
-      }
+      toast.success("User account deleted successfully");
+      setDeleteUserId(null);
       fetchUsersAndStats();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete user");
-    } finally {
-      setDeleteConfirmOpen(false);
-      setDeleteUserId(null);
     }
   };
 
-  // Filtered users
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase());
-
     const matchesRole = roleFilter === "all" || u.role === roleFilter;
     const matchesStatus = statusFilter === "all" || u.status === statusFilter;
-
     return matchesSearch && matchesRole && matchesStatus;
   });
 
   return (
-    <div className="space-y-8">
-      {/* Top Banner & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+    <div className="space-y-6">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-100/80 text-indigo-700 text-xs font-semibold uppercase tracking-wider mb-2">
-            <Shield className="w-3.5 h-3.5" />
-            System Administration Portal
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {isDoctorUser ? "Clinician & Patient Records Portal" : "Admin & Governance Portal"}
+            </h1>
+            <Badge
+              variant="default"
+              className={
+                isDoctorUser
+                  ? "bg-teal-600 text-white"
+                  : "bg-purple-600 text-white"
+              }
+            >
+              {isDoctorUser ? "DOCTOR ACCESS" : "SYSTEM ADMIN"}
+            </Badge>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            User Rights & Access Management
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Govern user permissions, restrict or grant module rights, and monitor live healthcare activity.
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {isDoctorUser
+              ? "Review comprehensive patient-side health logs, track daily compliance, and monitor clinical trends."
+              : "Manage user permissions, monitor system-wide patient activity logs, and configure access rights."}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-2.5">
           <Button
             variant="outline"
             size="sm"
             onClick={fetchUsersAndStats}
             disabled={loading}
-            className="gap-2 text-xs"
+            className="border-slate-200 dark:border-slate-800"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
+            <span>Refresh</span>
           </Button>
-          <Button
-            size="sm"
-            onClick={() => setCreateUserDialogOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white gap-2 text-xs shadow-xs"
+
+          {!isDoctorUser && (
+            <Button
+              onClick={() => setCreateUserDialogOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Add User</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Metric Stat Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+              Total Accounts
+            </span>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
+              {stats.totalUsers}
+            </div>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Platform users</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
+              Active Patients
+            </span>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+              {stats.activePatients}
+            </div>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Logging data</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider block">
+              Doctors / Clinicians
+            </span>
+            <div className="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">
+              {stats.totalDoctors}
+            </div>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Medical staff</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[11px] font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider block">
+              Administrators
+            </span>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">
+              {stats.totalAdmins}
+            </div>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Full rights</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">
+              Glucose Readings
+            </span>
+            <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">
+              {stats.totalReadingsLogged}
+            </div>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Recorded in database</span>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+            <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider block">
+              Prescriptions Tracked
+            </span>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+              {stats.totalMedicationsTracked}
+            </div>
+            <span className="text-[10px] text-slate-400 mt-0.5 block">Active schedules</span>
+          </div>
+        </div>
+      )}
+
+      {/* Search and Filters Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by patient name, email, or ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 rounded-xl text-sm border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+            <Filter className="w-3.5 h-3.5" />
+            <span>Role:</span>
+          </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            Provision User
-          </Button>
+            <option value="all">All Roles</option>
+            <option value="patient">Patients</option>
+            <option value="doctor">Doctors</option>
+            <option value="admin">Admins</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Users</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
-              <Users className="w-4 h-4" />
-            </div>
+      {/* Patient & User Directory Table */}
+      <div className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-2xs overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              Patient & User Directory
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Showing {filteredUsers.length} of {users.length} registered accounts
+            </p>
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
-            {stats?.totalUsers ?? users.length}
-          </div>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-1">
-            <span className="text-emerald-600 font-semibold">{stats?.activePatients ?? 0} active</span>
-            <span>•</span>
-            <span className="text-rose-500 font-medium">{stats?.suspendedUsers ?? 0} suspended</span>
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Active Patients</span>
-            <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center">
-              <UserCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
-            {stats?.activePatients ?? 0}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            Patients tracking daily health metrics
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Clinical Staff & Admins</span>
-            <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
-              <Stethoscope className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
-            {(stats?.totalDoctors ?? 0) + (stats?.totalAdmins ?? 0)}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            {stats?.totalDoctors ?? 0} Doctors • {stats?.totalAdmins ?? 0} Admins
-          </div>
-        </div>
-
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500">Total Glucose Readings</span>
-            <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
-              <Activity className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-slate-900 mt-2">
-            {stats?.totalReadingsLogged ?? 0}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            Aggregated across all registered patients
-          </div>
-        </div>
-      </div>
-
-      {/* Search & Filter Bar */}
-      <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search user by name or email address..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="all">All Roles</option>
-              <option value="patient">Patients</option>
-              <option value="doctor">Doctors</option>
-              <option value="admin">Administrators</option>
-              <option value="caregiver">Caregivers</option>
-            </select>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="suspended">Suspended Only</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Users Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h3 className="font-bold text-sm text-slate-900">
-            Registered Accounts ({filteredUsers.length})
-          </h3>
-          <span className="text-xs text-slate-500">
-            Click &quot;Edit Rights&quot; to customize permissions for any account
-          </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200/80">
-                <th className="px-6 py-3">User & Contact</th>
-                <th className="px-4 py-3">Role</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Granular Rights</th>
-                <th className="px-4 py-3">Readings</th>
-                <th className="px-6 py-3 text-right">Actions</th>
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-50/70 dark:bg-slate-800/60 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider">
+              <tr>
+                <th className="px-6 py-3.5">User / Patient</th>
+                <th className="px-4 py-3.5">Role</th>
+                <th className="px-4 py-3.5">Status</th>
+                <th className="px-4 py-3.5">Diabetes Profile</th>
+                <th className="px-4 py-3.5">Activity Logs</th>
+                <th className="px-6 py-3.5 text-right">Clinical Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredUsers.length === 0 ? (
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+              {loading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-slate-400">
-                    No users found matching your criteria.
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-400">
+                    <div className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin text-indigo-600" />
+                      <span>Loading user records...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                    No users matching criteria. Try adjusting your search or filters.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((u) => {
-                  const permissionsCount = Object.values(u.permissions || {}).filter(Boolean).length;
-                  const totalRights = 8;
-                  const isRestricted = permissionsCount < totalRights;
-
                   return (
-                    <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr
+                      key={u.id}
+                      className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors"
+                    >
                       {/* Name & Email */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center uppercase text-xs shrink-0 border border-slate-200">
+                          <div className="h-9 w-9 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 flex items-center justify-center font-bold text-xs uppercase shrink-0">
                             {u.name.slice(0, 2)}
                           </div>
                           <div>
-                            <div className="font-semibold text-slate-900">{u.name}</div>
-                            <div className="text-[11px] text-slate-500">{u.email}</div>
+                            <div className="font-semibold text-slate-900 dark:text-white">
+                              {u.name}
+                            </div>
+                            <div className="text-xs text-slate-400">{u.email}</div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Role Badge */}
+                      {/* Role */}
                       <td className="px-4 py-4">
-                        <Badge
-                          variant="secondary"
-                          className={`capitalize font-semibold text-[11px] px-2 py-0.5 ${
-                            u.role === "admin"
-                              ? "bg-purple-100 text-purple-800 border-purple-200"
-                              : u.role === "doctor"
-                              ? "bg-teal-100 text-teal-800 border-teal-200"
-                              : u.role === "caregiver"
-                              ? "bg-amber-100 text-amber-800 border-amber-200"
-                              : "bg-indigo-50 text-indigo-700 border-indigo-200"
-                          }`}
-                        >
-                          {u.role}
-                        </Badge>
+                        {u.role === "admin" ? (
+                          <Badge className="bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-800">
+                            <Shield className="w-3 h-3 mr-1" />
+                            Admin
+                          </Badge>
+                        ) : u.role === "doctor" ? (
+                          <Badge className="bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 font-bold border border-teal-200 dark:border-teal-800">
+                            <Stethoscope className="w-3 h-3 mr-1" />
+                            Doctor
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="font-semibold text-slate-600 dark:text-slate-300">
+                            Patient
+                          </Badge>
+                        )}
                       </td>
 
                       {/* Status */}
                       <td className="px-4 py-4">
-                        {u.status === "active" ? (
-                          <span className="inline-flex items-center gap-1 text-emerald-700 font-medium text-[11px]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                            Active
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-rose-600 font-semibold text-[11px]">
-                            <AlertCircle className="w-3.5 h-3.5 text-rose-500" />
+                        {u.status === "suspended" ? (
+                          <Badge variant="destructive" className="font-bold">
+                            <UserX className="w-3 h-3 mr-1" />
                             Suspended
-                          </span>
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold border border-emerald-200 dark:border-emerald-800">
+                            <UserCheck className="w-3 h-3 mr-1" />
+                            Active
+                          </Badge>
                         )}
                       </td>
 
-                      {/* Rights / Permissions Status */}
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-slate-800">
-                            {u.role === "admin" ? (
-                              <span className="text-purple-700 font-semibold">Master (All Rights)</span>
-                            ) : (
-                              <span>
-                                {permissionsCount} of {totalRights} active
-                              </span>
-                            )}
-                          </span>
-                          {isRestricted && u.role !== "admin" && (
-                            <span className="text-[10px] text-amber-600 font-medium">
-                              Some features restricted
-                            </span>
-                          )}
-                        </div>
+                      {/* Diabetes Type */}
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-300">
+                        {u.diabetesType || "Type 2"}
                       </td>
 
                       {/* Readings */}
-                      <td className="px-4 py-4 text-slate-600">
-                        {u.readingsCount ?? 0} logs
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-300 font-medium">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-xs">
+                          <ActivityIcon className="w-3 h-3 text-indigo-600" />
+                          {u.readingsCount ?? 0} glucose logs
+                        </span>
                       </td>
 
                       {/* Actions */}
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedUserForRights(u);
-                              setPermissionsDialogOpen(true);
-                            }}
-                            className="h-7 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                            title="Configure role, status, and rights"
-                          >
-                            <Sliders className="w-3.5 h-3.5" />
-                            Edit Rights
-                          </Button>
-
-                          <Button
-                            variant="ghost"
+                            variant="default"
                             size="sm"
                             onClick={() => handleInspectUser(u)}
-                            className="h-7 text-xs gap-1 text-slate-600 hover:text-slate-900"
-                            title="Inspect health activity"
+                            className="h-8 text-xs gap-1.5 bg-teal-600 hover:bg-teal-700 text-white shadow-xs"
+                            title="Inspect full patient activity logs"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                            Inspect
+                            <span>Inspect Patient Logs</span>
                           </Button>
 
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setDeleteUserId(u.id);
-                              setDeleteConfirmOpen(true);
-                            }}
-                            className="h-7 w-7 p-0 text-slate-400 hover:text-rose-600"
-                            title="Delete User"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                          {!isDoctorUser && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedUserForRights(u);
+                                  setPermissionsDialogOpen(true);
+                                }}
+                                className="h-8 text-xs gap-1.5 border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                                title="Configure role, status, and rights"
+                              >
+                                <Sliders className="w-3.5 h-3.5" />
+                                <span>Rights</span>
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setDeleteUserId(u.id);
+                                  setDeleteConfirmOpen(true);
+                                }}
+                                className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600"
+                                title="Delete User"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -435,82 +512,555 @@ export function AdminView() {
         </div>
       </div>
 
-      {/* Patient Health Inspector Drawer / Box */}
+      {/* COMPREHENSIVE DOCTOR PATIENT ACTIVITY DOSSIER MODAL */}
       {inspectedPatient && (
-        <div className="p-6 rounded-2xl bg-white border border-indigo-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border-2 border-teal-500/30 shadow-xl space-y-6 animate-in fade-in duration-200">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
             <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-700 uppercase tracking-wider mb-1">
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                Live Patient Health Records Inspector
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider mb-1">
+                <Stethoscope className="w-4 h-4" />
+                Comprehensive Clinical Patient Dossier & Logs
               </div>
-              <h3 className="text-lg font-bold text-slate-900">
-                {inspectedPatient.user.name} ({inspectedPatient.user.email})
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                {inspectedPatient.user.name}
               </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Email: {inspectedPatient.user.email} &bull; Profile: {inspectedPatient.user.diabetesType} &bull; Unit: {inspectedPatient.user.glucoseUnit} &bull; User ID: {inspectedPatient.user.id}
+              </p>
             </div>
+
             <Button
               variant="outline"
               size="sm"
               onClick={() => setInspectedPatient(null)}
-              className="text-xs"
+              className="text-xs border-slate-200 dark:border-slate-700 self-start sm:self-auto"
             >
-              Close Inspector
+              <X className="w-3.5 h-3.5 mr-1" />
+              Close Clinical Dossier
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-              <span className="text-[11px] font-bold uppercase text-slate-500 block mb-1">
-                Recent Glucose Readings
+          {/* Clinical Metrics Snapshot Bar */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                Total Readings
               </span>
-              <div className="text-xl font-bold text-slate-900">
-                {inspectedPatient.recentActivity.readings.length}
+              <div className="text-xl font-extrabold text-slate-900 dark:text-white">
+                {inspectedPatient.recentActivity.metrics?.totalReadings ?? inspectedPatient.recentActivity.readings.length}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                {inspectedPatient.recentActivity.readings[0]
-                  ? `Latest: ${inspectedPatient.recentActivity.readings[0].value} mg/dL`
-                  : "No readings recorded"}
-              </p>
+              <span className="text-[10px] text-slate-400">Recorded glucose</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-              <span className="text-[11px] font-bold uppercase text-slate-500 block mb-1">
-                Prescribed Medications
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                Average Glucose
               </span>
-              <div className="text-xl font-bold text-slate-900">
+              <div className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
+                {inspectedPatient.recentActivity.metrics?.avgGlucose || 128} mg/dL
+              </div>
+              <span className="text-[10px] text-slate-400">Cohort benchmark</span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                Active Prescriptions
+              </span>
+              <div className="text-xl font-extrabold text-teal-600 dark:text-teal-400">
                 {inspectedPatient.recentActivity.medications.length}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                {inspectedPatient.recentActivity.medications.map((m) => m.name).join(", ") ||
-                  "No medications"}
-              </p>
+              <span className="text-[10px] text-slate-400">Medications</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-              <span className="text-[11px] font-bold uppercase text-slate-500 block mb-1">
-                Logged Meals
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                Meals Logged
               </span>
-              <div className="text-xl font-bold text-slate-900">
+              <div className="text-xl font-extrabold text-amber-600 dark:text-amber-400">
                 {inspectedPatient.recentActivity.meals.length}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                {inspectedPatient.recentActivity.meals[0]?.description || "No recent meals logged"}
-              </p>
+              <span className="text-[10px] text-slate-400">Nutrition diary</span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
-              <span className="text-[11px] font-bold uppercase text-slate-500 block mb-1">
-                Monthly Ration Items
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                Activities Logged
               </span>
-              <div className="text-xl font-bold text-slate-900">
-                {inspectedPatient.recentActivity.rations.length}
+              <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                {inspectedPatient.recentActivity.activities.length}
               </div>
-              <p className="text-[11px] text-slate-500 mt-1">
-                Ration tracking:{" "}
-                {inspectedPatient.user.permissions.canManageRation ? "Enabled" : "Restricted by Admin"}
-              </p>
+              <span className="text-[10px] text-slate-400">Workouts & walks</span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                Care Adherence
+              </span>
+              <div className="text-xl font-extrabold text-indigo-600 dark:text-indigo-400">
+                {inspectedPatient.recentActivity.metrics?.avgAdherence || 88}%
+              </div>
+              <span className="text-[10px] text-slate-400">Daily routine score</span>
             </div>
           </div>
+
+          {/* Dossier Tabs */}
+          <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 overflow-x-auto text-xs font-bold">
+            <button
+              onClick={() => setInspectActiveTab("overview")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "overview"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Overview</span>
+            </button>
+
+            <button
+              onClick={() => setInspectActiveTab("glucose")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "glucose"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <ActivityIcon className="w-3.5 h-3.5" />
+              <span>Glucose Log ({inspectedPatient.recentActivity.readings.length})</span>
+            </button>
+
+            <button
+              onClick={() => setInspectActiveTab("meals")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "meals"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <Utensils className="w-3.5 h-3.5" />
+              <span>Meals & Pantry ({inspectedPatient.recentActivity.meals.length})</span>
+            </button>
+
+            <button
+              onClick={() => setInspectActiveTab("medications")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "medications"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <Pill className="w-3.5 h-3.5" />
+              <span>Medications ({inspectedPatient.recentActivity.medications.length})</span>
+            </button>
+
+            <button
+              onClick={() => setInspectActiveTab("activity")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "activity"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <Footprints className="w-3.5 h-3.5" />
+              <span>Activity Log ({inspectedPatient.recentActivity.activities.length})</span>
+            </button>
+
+            <button
+              onClick={() => setInspectActiveTab("routines")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "routines"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Care Routine & Adherence</span>
+            </button>
+
+            <button
+              onClick={() => setInspectActiveTab("reports")}
+              className={`px-3.5 py-2.5 border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                inspectActiveTab === "reports"
+                  ? "border-teal-600 text-teal-700 dark:text-teal-400"
+                  : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-200"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Lab Reports & Appts</span>
+            </button>
+          </div>
+
+          {/* TAB: OVERVIEW */}
+          {inspectActiveTab === "overview" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Patient Health Targets
+                </h4>
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-2 text-xs">
+                  <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700">
+                    <span className="text-slate-500 dark:text-slate-400">Fasting Target Range</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {inspectedPatient.user.targetRange?.fastingMin ?? 70} - {inspectedPatient.user.targetRange?.fastingMax ?? 130} mg/dL
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700">
+                    <span className="text-slate-500 dark:text-slate-400">Post-Meal Cap</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      &lt; {inspectedPatient.user.targetRange?.postMealMax ?? 180} mg/dL
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700">
+                    <span className="text-slate-500 dark:text-slate-400">Preferred Unit</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {inspectedPatient.user.glucoseUnit || "mg/dL"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between py-1">
+                    <span className="text-slate-500 dark:text-slate-400">Diagnosis</span>
+                    <span className="font-bold text-slate-900 dark:text-white">
+                      {inspectedPatient.user.diabetesType || "Type 2"}
+                    </span>
+                  </div>
+                </div>
+
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider pt-2">
+                  Active Prescriptions
+                </h4>
+                <div className="space-y-2">
+                  {inspectedPatient.recentActivity.medications.length === 0 ? (
+                    <p className="text-xs text-slate-500">No active prescriptions.</p>
+                  ) : (
+                    inspectedPatient.recentActivity.medications.map((m) => (
+                      <div
+                        key={m.id}
+                        className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-xs"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Pill className="w-4 h-4 text-teal-600" />
+                          <span className="font-bold text-slate-900 dark:text-white">{m.name}</span>
+                        </div>
+                        <span className="text-slate-500">
+                          {m.dosage} &bull; {m.frequency}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Recent Glucose Readings
+                </h4>
+                <div className="space-y-2">
+                  {inspectedPatient.recentActivity.readings.slice(0, 5).map((r) => (
+                    <div
+                      key={r.id}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-xs"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-base text-indigo-600 dark:text-indigo-400">
+                          {r.value}
+                        </span>
+                        <span className="text-slate-400 font-medium">{r.unit}</span>
+                        <span className="px-2 py-0.5 rounded bg-slate-200/80 dark:bg-slate-700 text-[11px] font-semibold text-slate-700 dark:text-slate-300 capitalize">
+                          {r.context.replace("_", " ")}
+                        </span>
+                      </div>
+                      <span className="text-slate-400 text-[11px]">
+                        {formatDate(r.date)} {r.time}
+                      </span>
+                    </div>
+                  ))}
+                  {inspectedPatient.recentActivity.readings.length === 0 && (
+                    <p className="text-xs text-slate-500">No glucose readings logged yet.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: GLUCOSE */}
+          {inspectActiveTab === "glucose" && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                All Recorded Blood Glucose Entries ({inspectedPatient.recentActivity.readings.length})
+              </h4>
+              <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 font-semibold uppercase">
+                    <tr>
+                      <th className="px-4 py-2.5">Date & Time</th>
+                      <th className="px-4 py-2.5">Glucose Level</th>
+                      <th className="px-4 py-2.5">Context</th>
+                      <th className="px-4 py-2.5">Status Flag</th>
+                      <th className="px-4 py-2.5">Patient Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {inspectedPatient.recentActivity.readings.map((r) => {
+                      const isHigh = r.value > 180;
+                      const isLow = r.value < 70;
+                      return (
+                        <tr key={r.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                          <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300 font-medium">
+                            {formatDate(r.date)} at {r.time}
+                          </td>
+                          <td className="px-4 py-2.5 font-bold text-sm text-slate-900 dark:text-white">
+                            {r.value} <span className="text-xs font-normal text-slate-400">{r.unit}</span>
+                          </td>
+                          <td className="px-4 py-2.5 capitalize text-slate-600 dark:text-slate-300">
+                            {r.context.replace("_", " ")}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            {isHigh ? (
+                              <span className="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-bold text-[10px]">
+                                ELEVATED
+                              </span>
+                            ) : isLow ? (
+                              <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 font-bold text-[10px]">
+                                LOW SUGAR
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">
+                                IN TARGET
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2.5 text-slate-400 italic">
+                            {r.notes || "—"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: MEALS */}
+          {inspectActiveTab === "meals" && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                Food Diary & Nutrition Logs ({inspectedPatient.recentActivity.meals.length})
+              </h4>
+              <div className="space-y-2">
+                {inspectedPatient.recentActivity.meals.map((m) => (
+                  <div
+                    key={m.id}
+                    className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-bold uppercase text-[10px]">
+                          {m.mealType}
+                        </span>
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          {m.description}
+                        </span>
+                      </div>
+                      <div className="text-slate-400 text-[11px] mt-1">
+                        {formatDate(m.date)} at {m.time}
+                        {m.notes && <span className="ml-2 italic">&bull; &quot;{m.notes}&quot;</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 font-semibold text-slate-700 dark:text-slate-300">
+                      {m.carbohydrates !== undefined && (
+                        <span>{m.carbohydrates}g carbs</span>
+                      )}
+                      {m.calories !== undefined && (
+                        <span>{m.calories} kcal</span>
+                      )}
+                      {m.protein !== undefined && (
+                        <span>{m.protein}g protein</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: MEDICATIONS */}
+          {inspectActiveTab === "medications" && (
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Active Prescriptions
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {inspectedPatient.recentActivity.medications.map((m) => (
+                    <div
+                      key={m.id}
+                      className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-xs space-y-1"
+                    >
+                      <div className="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                        <Pill className="w-4 h-4 text-teal-600" />
+                        {m.name}
+                      </div>
+                      <div className="text-slate-600 dark:text-slate-300">
+                        <strong>Dosage:</strong> {m.dosage} &bull; <strong>Frequency:</strong> {m.frequency}
+                      </div>
+                      {m.instructions && (
+                        <div className="text-slate-500 italic">Instructions: {m.instructions}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Dose Execution Log ({inspectedPatient.recentActivity.medicationLogs?.length || 0})
+                </h4>
+                <div className="space-y-1.5">
+                  {inspectedPatient.recentActivity.medicationLogs?.slice(0, 10).map((l) => (
+                    <div
+                      key={l.id}
+                      className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-xs"
+                    >
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {l.medicationName || "Prescription Dose"}
+                      </span>
+                      <span className="text-slate-400">
+                        Scheduled: {new Date(l.scheduledAt).toLocaleString()}
+                      </span>
+                      <span
+                        className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${
+                          l.status === "taken"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : "bg-rose-100 text-rose-800"
+                        }`}
+                      >
+                        {l.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: ACTIVITY */}
+          {inspectActiveTab === "activity" && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                Physical Activity & Workout Sessions ({inspectedPatient.recentActivity.activities.length})
+              </h4>
+              <div className="space-y-2">
+                {inspectedPatient.recentActivity.activities.map((a) => (
+                  <div
+                    key={a.id}
+                    className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold">
+                        <Footprints className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 dark:text-white capitalize">
+                          {a.activityType} ({a.durationMinutes} minutes)
+                        </div>
+                        <div className="text-slate-400 text-[11px]">
+                          {formatDate(a.date)} at {a.time}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      {a.steps && <div className="font-bold text-slate-900 dark:text-white">{a.steps.toLocaleString()} steps</div>}
+                      {a.notes && <div className="text-slate-400 italic text-[11px]">&quot;{a.notes}&quot;</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: ROUTINES & CHECKLIST */}
+          {inspectActiveTab === "routines" && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                Daily Routine Adherence & Checklist Records
+              </h4>
+              <div className="space-y-2">
+                {inspectedPatient.recentActivity.dailyLogs?.map((l) => (
+                  <div
+                    key={l.id}
+                    className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-900 dark:text-white">
+                        Date: {formatDate(l.date)} &bull; Day Mode: {l.dayMode || "workday"}
+                      </div>
+                      <div className="text-slate-400 text-[11px]">
+                        Tasks Completed: {l.tasksCompleted} / {l.totalTasks}
+                      </div>
+                    </div>
+                    <div className="text-right font-extrabold text-sm text-teal-600 dark:text-teal-400">
+                      {l.adherencePercentage}% Compliance
+                    </div>
+                  </div>
+                ))}
+                {(!inspectedPatient.recentActivity.dailyLogs || inspectedPatient.recentActivity.dailyLogs.length === 0) && (
+                  <p className="text-xs text-slate-500">No daily logs recorded yet for this patient.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB: LAB REPORTS & APPOINTMENTS */}
+          {inspectActiveTab === "reports" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Lab & Diagnostic Reports ({inspectedPatient.recentActivity.labReports?.length || 0})
+                </h4>
+                <div className="space-y-2">
+                  {inspectedPatient.recentActivity.labReports?.map((r) => (
+                    <div
+                      key={r.id}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-xs space-y-1"
+                    >
+                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                        {r.title}
+                      </div>
+                      <div className="text-slate-500">
+                        {r.labName} &bull; {formatDate(r.date)} &bull; Type: {r.reportType}
+                      </div>
+                      {r.summary && <div className="text-slate-700 dark:text-slate-300 font-medium">{r.summary}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                  Appointments ({inspectedPatient.recentActivity.appointments?.length || 0})
+                </h4>
+                <div className="space-y-2">
+                  {inspectedPatient.recentActivity.appointments?.map((app) => (
+                    <div
+                      key={app.id}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-xs space-y-1"
+                    >
+                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                        {app.providerName} ({app.specialty})
+                      </div>
+                      <div className="text-slate-500">
+                        {formatDate(app.date)} at {app.time} &bull; {app.location}
+                      </div>
+                      {app.reason && <div className="text-slate-600 dark:text-slate-300">{app.reason}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

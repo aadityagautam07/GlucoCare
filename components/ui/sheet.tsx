@@ -118,11 +118,11 @@ export function SheetContent({
 
   const sideClasses = {
     bottom:
-      "bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl border-t border-slate-200 animate-in slide-in-from-bottom duration-200",
+      "bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl border-t border-slate-200 dark:border-slate-800 animate-in slide-in-from-bottom duration-200",
     right:
-      "right-0 top-0 bottom-0 w-full max-w-md border-l border-slate-200 animate-in slide-in-from-right duration-200",
+      "right-0 top-0 bottom-0 w-full max-w-md border-l border-slate-200 dark:border-slate-800 animate-in slide-in-from-right duration-200",
     left:
-      "left-0 top-0 bottom-0 w-full max-w-md border-r border-slate-200 animate-in slide-in-from-left duration-200",
+      "left-0 top-0 bottom-0 w-full max-w-md border-r border-slate-200 dark:border-slate-800 animate-in slide-in-from-left duration-200",
   };
 
   return (
@@ -133,14 +133,14 @@ export function SheetContent({
       />
       <div
         className={cn(
-          "fixed z-50 bg-white p-6 shadow-2xl overflow-y-auto",
+          "fixed z-50 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 shadow-2xl overflow-y-auto",
           sideClasses[side],
           className
         )}
       >
         <button
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+          className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           aria-label="Close sheet"
         >
           <X className="h-5 w-5" />
@@ -169,7 +169,7 @@ export function SheetTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={cn("text-xl font-bold tracking-tight text-slate-900", className)}
+      className={cn("text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100", className)}
       {...props}
     />
   );
@@ -181,7 +181,7 @@ export function SheetDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={cn("text-sm text-slate-500", className)}
+      className={cn("text-sm text-slate-500 dark:text-slate-400", className)}
       {...props}
     />
   );

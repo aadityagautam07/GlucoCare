@@ -475,6 +475,20 @@ export function TodayPlan({
                   calories: 380,
                 }),
               }).then(() => onRefreshData?.());
+            } else if (taskId === "e1" && !todayMeals.some((m) => m.mealType === "dinner")) {
+              fetch("/api/meals", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  mealType: "dinner",
+                  description: "Light Dinner: Veggie Daliya / Palak Paneer",
+                  date: selectedDate,
+                  time: "20:15",
+                  carbohydrates: 28,
+                  protein: 14,
+                  calories: 320,
+                }),
+              }).then(() => onRefreshData?.());
             } else if (taskId === "m3" && !todayActivities.some((a) => a.durationMinutes >= 15)) {
               fetch("/api/activities", {
                 method: "POST",
@@ -486,6 +500,46 @@ export function TodayPlan({
                   date: selectedDate,
                   time: "09:00",
                   notes: "Morning brisk walk recorded via Checklist",
+                }),
+              }).then(() => onRefreshData?.());
+            } else if (taskId === "d5" && !todayActivities.some((a) => a.time === "14:00")) {
+              fetch("/api/activities", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  activityType: "walking",
+                  durationMinutes: 12,
+                  steps: 1500,
+                  date: selectedDate,
+                  time: "14:00",
+                  notes: "Post-lunch relaxed stroll recorded via Checklist",
+                }),
+              }).then(() => onRefreshData?.());
+            } else if (taskId === "a4" && !todayActivities.some((a) => a.time === "18:30")) {
+              fetch("/api/activities", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  activityType: "walking",
+                  durationMinutes: 45,
+                  steps: 4800,
+                  date: selectedDate,
+                  time: "18:30",
+                  notes: "Evening walk recorded via Checklist",
+                }),
+              }).then(() => onRefreshData?.());
+            } else if (taskId === "e4") {
+              fetch("/api/medication-logs", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  medicationId: "med-evening-routine",
+                  medicationName: "Prescribed Evening Medications",
+                  scheduledAt: `${selectedDate}T22:00:00.000Z`,
+                  status: "taken",
+                  takenAt: new Date().toISOString(),
+                  dosage: "As Prescribed",
+                  notes: "Confirmed taken via Daily Checklist",
                 }),
               }).then(() => onRefreshData?.());
             }

@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { glucoseReadingSchema, GlucoseReadingInput } from "@/lib/validations";
-import { GlucoseUnit } from "@/types";
+import { GlucoseUnit, GlucoseReading } from "@/types";
 import { toast } from "sonner";
 import { Activity as GlucoseIcon } from "lucide-react";
 
@@ -24,7 +24,7 @@ interface AddGlucoseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultUnit?: GlucoseUnit;
-  onSuccess?: () => void;
+  onSuccess?: (reading?: GlucoseReading) => void;
 }
 
 function AddGlucoseForm({
@@ -34,7 +34,7 @@ function AddGlucoseForm({
 }: {
   defaultUnit: GlucoseUnit;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess?: (reading?: GlucoseReading) => void;
 }) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [selectedUnit, setSelectedUnit] = React.useState<GlucoseUnit>(defaultUnit);
@@ -74,12 +74,13 @@ function AddGlucoseForm({
         throw new Error("Failed to save glucose reading");
       }
 
+      const json = await res.json();
       toast.success("Glucose reading saved successfully", {
         description: `${data.value} ${data.unit} (${data.context.replace("_", " ")})`,
       });
 
       onClose();
-      onSuccess?.();
+      onSuccess?.(json.reading);
     } catch {
       toast.error("Failed to record glucose reading. Please try again.");
     } finally {

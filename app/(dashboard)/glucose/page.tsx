@@ -3,6 +3,9 @@ import { getSessionUser } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { GlucoseView } from "@/components/glucose/glucose-view";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function GlucosePage() {
   const user = await getSessionUser();
   if (!user) {
@@ -13,4 +16,3 @@ export default async function GlucosePage() {
 
   return <GlucoseView user={user} readings={readings} />;
 }
-

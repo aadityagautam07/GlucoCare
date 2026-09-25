@@ -1,20 +1,22 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getSessionUser, isAdmin } from "@/lib/auth";
+import { getSessionUser, isDoctorOrAdmin } from "@/lib/auth";
 import { AdminView } from "@/components/admin/admin-view";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
-  title: "Admin Portal | GlucoCare",
-  description: "System administration and user rights governance portal.",
+  title: "Clinical & Admin Portal | GlucoCare",
+  description: "System administration and patient clinical records portal.",
 };
 
 export default async function AdminPage() {
   const user = await getSessionUser();
 
-  if (!isAdmin(user)) {
+  if (!isDoctorOrAdmin(user)) {
     redirect("/dashboard");
   }
 
-  return <AdminView />;
+  return <AdminView currentUser={user} />;
 }
-

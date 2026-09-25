@@ -19,18 +19,43 @@ interface ActivityViewProps {
 
 export function ActivityView({ activities }: ActivityViewProps) {
   const router = useRouter();
+  const [activityList, setActivityList] = React.useState<Activity[]>(activities);
   const [addModalOpen, setAddModalOpen] = React.useState(false);
   const [deleteTarget, setDeleteTarget] = React.useState<Activity | null>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
 
+  React.useEffect(() => {
+    setActivityList(activities);
+  }, [activities]);
+
   const todayStr = new Date().toISOString().split("T")[0];
-  const todayActs = activities.filter((a) => a.date === todayStr);
+  const todayActs = activityList.filter((a) => a.date === todayStr);
   const todayMins = todayActs.reduce((sum, a) => sum + (a.durationMinutes || 0), 0);
   const todaySteps = todayActs.reduce((sum, a) => sum + (a.steps || 0), 0);
   const todayCals = Math.round(todayMins * 5.5 + todaySteps * 0.04);
 
-  const handleRefresh = () => {
+  const fetchActivities = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/activities");
+      if (res.ok) {
+        const d = await res.json();
+        if (Array.isArray(d.activities)) setActivityList(d.activities);
+      }
+    } catch {
+      // quiet fallback
+    }
+  }, []);
+
+  const handleRefresh = React.useCallback(() => {
+    fetchActivities();
     router.refresh();
+  }, [fetchActivities, router]);
+
+  const handleActivityCreated = (newAct?: Activity) => {
+    if (newAct) {
+      setActivityList((prev) => [newAct, ...prev.filter((a) => a.id !== newAct.id)]);
+    }
+    handleRefresh();
   };
 
   const handleDelete = async () => {
@@ -42,6 +67,7 @@ export function ActivityView({ activities }: ActivityViewProps) {
       });
       if (!res.ok) throw new Error("Failed to delete activity");
       toast.success("Activity log deleted");
+      setActivityList((prev) => prev.filter((a) => a.id !== deleteTarget.id));
       setDeleteTarget(null);
       handleRefresh();
     } catch {
@@ -78,33 +104,33 @@ export function ActivityView({ activities }: ActivityViewProps) {
       />
 
       {/* Weekly Activity Chart */}
-      <ActivityBarChart activities={activities} />
+      <ActivityBarChart activities={activityList} />
 
       {/* Activity Log List */}
       <div className="space-y-3">
-        <h2 className="text-lg font-bold text-slate-900">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white">
           Activity History
         </h2>
 
-        {activities.length === 0 ? (
-          <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-sm text-slate-500">
+        {activityList.length === 0 ? (
+          <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-sm text-slate-500 dark:text-slate-400">
             No activities logged yet. Record your daily walks or exercises.
           </div>
         ) : (
           <div className="space-y-3">
-            {activities.map((act) => (
+            {activityList.map((act) => (
               <Card
                 key={act.id}
-                className="shadow-xs hover:border-emerald-200 transition-all border-slate-200/80"
+                className="shadow-xs hover:border-emerald-200 dark:hover:border-emerald-800 transition-all border-slate-200/80 dark:border-slate-800"
               >
                 <CardContent className="p-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3.5">
-                    <div className="h-10 w-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                    <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
                       <Footprints className="h-5 w-5" />
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900 capitalize">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white capitalize">
                           {act.activityType}
                         </span>
                         <span className="text-xs text-slate-400 flex items-center gap-1">
@@ -112,8 +138,8 @@ export function ActivityView({ activities }: ActivityViewProps) {
                           {formatDate(act.date)} at {formatTime(act.time)}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-600">
-                        <span className="font-semibold text-emerald-700">
+                      <div className="flex items-center gap-3 mt-1 text-xs text-slate-600 dark:text-slate-300">
+                        <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                           {act.durationMinutes} minutes
                         </span>
                         {act.steps && (
@@ -130,7 +156,7 @@ export function ActivityView({ activities }: ActivityViewProps) {
 
                   <button
                     onClick={() => setDeleteTarget(act)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                     title="Delete activity"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -145,7 +171,7 @@ export function ActivityView({ activities }: ActivityViewProps) {
       <AddActivityDialog
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
-        onSuccess={handleRefresh}
+        onSuccess={handleActivityCreated}
       />
 
       <ConfirmDialog
@@ -160,4 +186,3 @@ export function ActivityView({ activities }: ActivityViewProps) {
     </div>
   );
 }
-

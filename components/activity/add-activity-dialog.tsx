@@ -16,13 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { activitySchema, ActivityInput } from "@/lib/validations";
+import { Activity } from "@/types";
 import { toast } from "sonner";
 import { Footprints } from "lucide-react";
 
 interface AddActivityDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (activity?: Activity) => void;
 }
 
 export function AddActivityDialog({
@@ -79,12 +80,13 @@ export function AddActivityDialog({
 
       if (!res.ok) throw new Error("Failed to record activity");
 
+      const json = await res.json();
       toast.success("Activity logged", {
         description: `${data.durationMinutes} min ${data.activityType} recorded`,
       });
 
       onOpenChange(false);
-      onSuccess?.();
+      onSuccess?.(json.activity);
     } catch {
       toast.error("Failed to save activity. Please try again.");
     } finally {

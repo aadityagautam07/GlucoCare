@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSessionUser, isAdmin, hashPassword } from "@/lib/auth";
+import { getSessionUser, isAdmin, isDoctorOrAdmin, hashPassword } from "@/lib/auth";
 import { memoryDb } from "@/lib/db";
 import { DEFAULT_PATIENT_PERMISSIONS } from "@/lib/seed-data";
 import { UserProfile, UserRole, UserStatus, UserPermissions } from "@/types";
@@ -7,9 +7,9 @@ import { UserProfile, UserRole, UserStatus, UserPermissions } from "@/types";
 export async function GET() {
   try {
     const sessionUser = await getSessionUser();
-    if (!isAdmin(sessionUser)) {
+    if (!isDoctorOrAdmin(sessionUser)) {
       return NextResponse.json(
-        { error: "Forbidden: Administrator privileges required" },
+        { error: "Forbidden: Clinical or Administrator privileges required" },
         { status: 403 }
       );
     }
