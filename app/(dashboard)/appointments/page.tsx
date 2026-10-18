@@ -12,7 +12,7 @@ export default async function AppointmentsPage() {
     redirect("/login");
   }
 
-  const appointments = memoryDb.getAppointments(user.id);
+  const appointments = await memoryDb.getAppointments(user.id);
 
   return <AppointmentsView appointments={appointments} />;
 }

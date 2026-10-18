@@ -15,7 +15,7 @@ export async function PUT(
     const { id } = await params;
     const updates = await req.json();
 
-    const updated = memoryDb.updateMedication(id, user.id, updates);
+    const updated = await memoryDb.updateMedication(id, user.id, updates);
     if (!updated) {
       return NextResponse.json({ error: "Medication not found" }, { status: 404 });
     }
@@ -38,7 +38,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = memoryDb.deleteMedication(id, user.id);
+    const deleted = await memoryDb.deleteMedication(id, user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Medication not found" }, { status: 404 });

@@ -23,7 +23,7 @@ export async function GET(req: Request) {
 
     const effectiveUserId = (isAdmin(user) && targetUserId) ? targetUserId : user.id;
 
-    const readings = memoryDb.getGlucoseReadings(effectiveUserId);
+    const readings = await memoryDb.getGlucoseReadings(effectiveUserId);
     const sliced = limit ? readings.slice(0, limit) : readings;
 
     return NextResponse.json({ readings: sliced });
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.addGlucoseReading(newReading);
+    const saved = await memoryDb.addGlucoseReading(newReading);
     return NextResponse.json({ reading: saved }, { status: 201 });
   } catch (error) {
     console.error("POST /api/glucose error:", error);

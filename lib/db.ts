@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import dns from "dns";
 import fs from "fs";
 import path from "path";
 import {
@@ -35,6 +36,20 @@ import {
   AppleFitnessDayLog,
 } from "@/types";
 import { AppleFitnessLogInput } from "@/lib/validations";
+import {
+  UserModel,
+  GlucoseReadingModel,
+  MedicationModel,
+  MedicationLogModel,
+  MealModel,
+  ActivityModel,
+  AppointmentModel,
+  RationItemModel,
+  LabReportModel,
+  AppleFitnessDayLogModel,
+  DailyLogRecordModel,
+  ResetTokenModel,
+} from "./models";
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -54,22 +69,32 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
   const MONGODB_URI = process.env.MONGODB_URI;
 
   if (!MONGODB_URI) {
-    // In-memory / file-backed demo mode active
     return null;
   }
 
-  if (cached.conn) {
+  if (cached.conn && cached.conn.connection.readyState === 1) {
     return cached.conn;
   }
 
   if (!cached.promise) {
+    try {
+      dns.setServers(["8.8.8.8", "1.1.1.1"]);
+    } catch {
+      // ignore
+    }
+
     cached.promise = mongoose
       .connect(MONGODB_URI, {
         bufferCommands: false,
+        serverSelectionTimeoutMS: 5000,
       })
-      .then((m) => m)
+      .then((m) => {
+        console.log("[MongoDB] Connected to Atlas cluster successfully");
+        return m;
+      })
       .catch((err) => {
-        console.warn("MongoDB connection failed, falling back to persistent data store:", err.message);
+        console.warn("[MongoDB] Connection warning, using in-memory store:", err.message);
+        cached.promise = null;
         return null as unknown as typeof mongoose;
       });
   }
@@ -84,9 +109,24 @@ export async function connectToDatabase(): Promise<typeof mongoose | null> {
   return cached.conn;
 }
 
+// Automatically initiate connection on import
+if (process.env.MONGODB_URI) {
+  connectToDatabase().catch(() => {});
+}
+
+function formatMongoDoc<T = any>(doc: any): T {
+  if (!doc) return doc;
+  const obj = doc.toObject ? doc.toObject() : { ...doc };
+  if (obj._id && !obj.id) {
+    obj.id = obj._id.toString();
+  }
+  delete obj._id;
+  delete obj.__v;
+  return obj as T;
+}
+
 // -------------------------------------------------------------
-// Persistent File-Backed Data Repository Store
-// Synchronizes across all Next.js worker threads and server reloads
+// In-Memory & File-Backed Fallback Data Repository
 // -------------------------------------------------------------
 
 export interface ResetTokenRecord {
@@ -141,8 +181,8 @@ function persistStoreToDisk() {
     if (fs.existsSync(DATA_STORE_PATH)) {
       global.lastLoadedDiskMtime = fs.statSync(DATA_STORE_PATH).mtimeMs;
     }
-  } catch (err) {
-    console.error("Failed to persist data store to disk:", err);
+  } catch {
+    // EROFS on serverless or filesystem restrictions
   }
 }
 
@@ -156,7 +196,6 @@ function getMemoryStore(): InMemStore {
     // ignore
   }
 
-  // If memoryStore exists and disk file has not been modified externally, return memory store
   if (
     global.memoryStore &&
     global.lastLoadedDiskMtime &&
@@ -165,7 +204,6 @@ function getMemoryStore(): InMemStore {
     return global.memoryStore;
   }
 
-  // Try loading from disk file if available
   if (fs.existsSync(DATA_STORE_PATH)) {
     try {
       const content = fs.readFileSync(DATA_STORE_PATH, "utf-8");
@@ -195,33 +233,18 @@ function getMemoryStore(): InMemStore {
 
       global.lastLoadedDiskMtime = fileMtime;
       return global.memoryStore;
-    } catch (err) {
-      console.error("Error reading data-store.json, creating initial store:", err);
+    } catch {
+      // fall through to seed
     }
   }
 
-  // Otherwise initialize fresh from seed data
   const userMap = new Map<string, UserProfile & { passwordHash?: string }>();
 
-  // Populate seed users
   for (const seed of demoSeedUsers) {
     userMap.set(seed.id, {
       ...seed,
-      passwordHash: "$2a$10$wT282gY6E1G6v6hQ.q1j2uR4v6zQZ7yK1m0N3p5s9o4X8j7h6f5d2", // default demo hash
+      passwordHash: "$2a$10$wT282gY6E1G6v6hQ.q1j2uR4v6zQZ7yK1m0N3p5s9o4X8j7h6f5d2",
     });
-  }
-
-  // Load local admin accounts created via CLI if present
-  try {
-    const adminStorePath = path.resolve(process.cwd(), "lib/admin-store.json");
-    if (fs.existsSync(adminStorePath)) {
-      const localAdmins = JSON.parse(fs.readFileSync(adminStorePath, "utf-8"));
-      for (const a of localAdmins) {
-        userMap.set(a.id, a);
-      }
-    }
-  } catch {
-    // Ignore if not present
   }
 
   global.memoryStore = {
@@ -243,12 +266,32 @@ function getMemoryStore(): InMemStore {
   return global.memoryStore!;
 }
 
+// -------------------------------------------------------------
+// Unified Persistent Hybrid Database Engine
+// Reads & writes to MongoDB Atlas when connected, with local fallback
+// -------------------------------------------------------------
+
 export const memoryDb = {
   getStore: getMemoryStore,
   persist: persistStoreToDisk,
 
-  // User
-  getUserById(id: string): UserProfile | undefined {
+  // --- User Operations ---
+  async getUserById(id: string): Promise<UserProfile | undefined> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const u = await UserModel.findOne({ id }).lean();
+        if (u) {
+          const formatted = formatMongoDoc<UserProfile & { passwordHash?: string }>(u);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { passwordHash, ...profile } = formatted;
+          return profile as UserProfile;
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const u = store.users.get(id);
     if (!u) return undefined;
@@ -257,31 +300,93 @@ export const memoryDb = {
     return profile;
   },
 
-  getUserByEmail(email: string): (UserProfile & { passwordHash?: string }) | undefined {
+  async getUserByEmail(email: string): Promise<(UserProfile & { passwordHash?: string }) | undefined> {
+    const normalized = email.toLowerCase().trim();
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const u = await UserModel.findOne({ email: normalized }).lean();
+        if (u) {
+          return formatMongoDoc<UserProfile & { passwordHash?: string }>(u);
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     for (const u of store.users.values()) {
-      if (u.email.toLowerCase() === email.toLowerCase()) {
+      if (u.email.toLowerCase() === normalized) {
         return u;
       }
     }
     return undefined;
   },
 
-  saveUser(user: UserProfile & { passwordHash?: string }) {
+  async saveUser(user: UserProfile & { passwordHash?: string }) {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await UserModel.findOneAndUpdate(
+          { id: user.id },
+          { ...user, email: user.email.toLowerCase().trim() },
+          { upsert: true, new: true }
+        );
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] saveUser warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.users.set(user.id, user);
     persistStoreToDisk();
     return user;
   },
 
-  getAllUsers(): AdminUserSummary[] {
+  async getAllUsers(): Promise<AdminUserSummary[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const users = await UserModel.find({}).lean();
+        if (users && users.length > 0) {
+          const summaries: AdminUserSummary[] = [];
+          for (const u of users) {
+            const count = await GlucoseReadingModel.countDocuments({ userId: u.id });
+            const latest = await GlucoseReadingModel.findOne({ userId: u.id }).sort({ measuredAt: -1 }).lean();
+            summaries.push({
+              id: u.id,
+              name: u.name,
+              email: u.email,
+              role: (u.role as UserRole) || "patient",
+              status: (u.status as UserStatus) || "active",
+              permissions: u.permissions || {
+                canLogGlucose: true,
+                canManageMedications: true,
+                canLogMeals: true,
+                canManageRation: true,
+                canLogActivity: true,
+                canManageAppointments: true,
+                canViewReports: true,
+                canExportData: true,
+              },
+              diabetesType: u.diabetesType as any,
+              readingsCount: count,
+              lastActive: latest ? latest.date : new Date(u.createdAt).toISOString(),
+              createdAt: new Date(u.createdAt).toISOString(),
+            });
+          }
+          return summaries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const summaries: AdminUserSummary[] = [];
-
     for (const u of store.users.values()) {
       const readings = store.glucose.filter((g) => g.userId === u.id);
       const latestReading = readings[0];
-
       summaries.push({
         id: u.id,
         name: u.name,
@@ -304,11 +409,25 @@ export const memoryDb = {
         createdAt: u.createdAt,
       });
     }
-
     return summaries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
-  updateUser(id: string, updates: Partial<UserProfile>): UserProfile | null {
+  async updateUser(id: string, updates: Partial<UserProfile>): Promise<UserProfile | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const updated = await UserModel.findOneAndUpdate({ id }, { $set: updates }, { new: true }).lean();
+        if (updated) {
+          const formatted = formatMongoDoc<UserProfile & { passwordHash?: string }>(updated);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { passwordHash, ...profile } = formatted;
+          return profile as UserProfile;
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const existing = store.users.get(id);
     if (!existing) return null;
@@ -327,12 +446,35 @@ export const memoryDb = {
     return profile;
   },
 
-  updateUserRoleAndPermissions(
+  async updateUserRoleAndPermissions(
     id: string,
     role: UserRole,
     status: UserStatus,
     permissions: Partial<UserPermissions>
-  ): UserProfile | null {
+  ): Promise<UserProfile | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const existing = await UserModel.findOne({ id }).lean();
+        if (existing) {
+          const mergedPermissions = { ...existing.permissions, ...permissions };
+          const updated = await UserModel.findOneAndUpdate(
+            { id },
+            { $set: { role, status, permissions: mergedPermissions } },
+            { new: true }
+          ).lean();
+          if (updated) {
+            const formatted = formatMongoDoc<UserProfile & { passwordHash?: string }>(updated);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { passwordHash, ...profile } = formatted;
+            return profile as UserProfile;
+          }
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const existing = store.users.get(id);
     if (!existing) return null;
@@ -353,7 +495,26 @@ export const memoryDb = {
     return profile;
   },
 
-  deleteUser(id: string): boolean {
+  async deleteUser(id: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await UserModel.deleteOne({ id });
+        await GlucoseReadingModel.deleteMany({ userId: id });
+        await MedicationModel.deleteMany({ userId: id });
+        await MedicationLogModel.deleteMany({ userId: id });
+        await MealModel.deleteMany({ userId: id });
+        await ActivityModel.deleteMany({ userId: id });
+        await AppointmentModel.deleteMany({ userId: id });
+        await RationItemModel.deleteMany({ userId: id });
+        await DailyLogRecordModel.deleteMany({ userId: id });
+        await LabReportModel.deleteMany({ userId: id });
+        await AppleFitnessDayLogModel.deleteMany({ userId: id });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const deleted = store.users.delete(id);
     if (deleted) {
@@ -371,7 +532,32 @@ export const memoryDb = {
     return deleted;
   },
 
-  getAdminStats(): AdminSystemStats {
+  async getAdminStats(): Promise<AdminSystemStats> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const totalUsers = await UserModel.countDocuments({});
+        const activePatients = await UserModel.countDocuments({ role: "patient", status: "active" });
+        const totalDoctors = await UserModel.countDocuments({ role: "doctor" });
+        const totalAdmins = await UserModel.countDocuments({ role: "admin" });
+        const totalReadingsLogged = await GlucoseReadingModel.countDocuments({});
+        const totalMedicationsTracked = await MedicationModel.countDocuments({});
+        const suspendedUsers = await UserModel.countDocuments({ status: "suspended" });
+
+        return {
+          totalUsers,
+          activePatients,
+          totalDoctors,
+          totalAdmins,
+          totalReadingsLogged,
+          totalMedicationsTracked,
+          suspendedUsers,
+        };
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const users = Array.from(store.users.values());
 
@@ -391,7 +577,6 @@ export const memoryDb = {
     const store = getMemoryStore();
     let hasChanges = false;
 
-    // Starter glucose
     const hasGlucose = store.glucose.some((g) => g.userId === userId);
     if (!hasGlucose) {
       const clonedGlucose = demoGlucoseReadings.slice(0, 15).map((g, idx) => ({
@@ -403,7 +588,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter medications
     const hasMeds = store.medications.some((m) => m.userId === userId);
     if (!hasMeds) {
       const clonedMeds = demoMedications.map((m, idx) => ({
@@ -423,7 +607,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter meals
     const hasMeals = store.meals.some((m) => m.userId === userId);
     if (!hasMeals) {
       const clonedMeals = demoMeals.map((m, idx) => ({
@@ -435,7 +618,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter activities
     const hasActivities = store.activities.some((a) => a.userId === userId);
     if (!hasActivities) {
       const clonedActs = demoActivities.map((a, idx) => ({
@@ -447,7 +629,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter appointments
     const hasAppts = store.appointments.some((a) => a.userId === userId);
     if (!hasAppts) {
       const clonedAppts = demoAppointments.map((a, idx) => ({
@@ -459,7 +640,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter rations
     const hasRations = store.rations.some((r) => r.userId === userId);
     if (!hasRations) {
       const clonedRations = demoRationItems.map((r, idx) => ({
@@ -471,7 +651,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter lab & diagnostic reports
     const hasLabReports = store.labReports.some((r) => r.userId === userId);
     if (!hasLabReports) {
       const clonedReports = demoLabReports.map((r, idx) => ({
@@ -483,7 +662,6 @@ export const memoryDb = {
       hasChanges = true;
     }
 
-    // Starter Apple Fitness Daily Logs (Calories, Step Count, Step Distance)
     if (!store.appleFitnessLogs) store.appleFitnessLogs = [];
     const hasFitnessLogs = store.appleFitnessLogs.some((f) => f.userId === userId);
     if (!hasFitnessLogs) {
@@ -503,48 +681,6 @@ export const memoryDb = {
           createdAt: today.toISOString(),
           updatedAt: today.toISOString(),
         },
-        {
-          id: `fit-${userId}-1`,
-          userId,
-          date: new Date(Date.now() - 86400000 * 1).toISOString().split("T")[0],
-          calories: 580,
-          stepCount: 9800,
-          stepDistance: 7.3,
-          caloriesGoal: 500,
-          stepCountGoal: 10000,
-          stepDistanceGoal: 5.0,
-          notes: "Brisk evening walk after dinner",
-          createdAt: today.toISOString(),
-          updatedAt: today.toISOString(),
-        },
-        {
-          id: `fit-${userId}-2`,
-          userId,
-          date: new Date(Date.now() - 86400000 * 2).toISOString().split("T")[0],
-          calories: 460,
-          stepCount: 7200,
-          stepDistance: 5.1,
-          caloriesGoal: 500,
-          stepCountGoal: 10000,
-          stepDistanceGoal: 5.0,
-          notes: "Desk work + stair intervals",
-          createdAt: today.toISOString(),
-          updatedAt: today.toISOString(),
-        },
-        {
-          id: `fit-${userId}-3`,
-          userId,
-          date: new Date(Date.now() - 86400000 * 3).toISOString().split("T")[0],
-          calories: 610,
-          stepCount: 10400,
-          stepDistance: 7.8,
-          caloriesGoal: 500,
-          stepCountGoal: 10000,
-          stepDistanceGoal: 5.0,
-          notes: "Closed all 3 rings! Jog + weekend hike",
-          createdAt: today.toISOString(),
-          updatedAt: today.toISOString(),
-        },
       ];
       store.appleFitnessLogs.push(...demoFitness);
       hasChanges = true;
@@ -555,8 +691,20 @@ export const memoryDb = {
     }
   },
 
-  // Glucose
-  getGlucoseReadings(userId: string): GlucoseReading[] {
+  // --- Blood Glucose Operations ---
+  async getGlucoseReadings(userId: string): Promise<GlucoseReading[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await GlucoseReadingModel.find({ userId }).sort({ measuredAt: -1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.glucose
@@ -564,14 +712,41 @@ export const memoryDb = {
       .sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
   },
 
-  addGlucoseReading(reading: GlucoseReading): GlucoseReading {
+  async addGlucoseReading(reading: GlucoseReading): Promise<GlucoseReading> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await GlucoseReadingModel.findOneAndUpdate(
+          { id: reading.id },
+          reading,
+          { upsert: true, new: true }
+        );
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addGlucoseReading warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.glucose.unshift(reading);
     persistStoreToDisk();
     return reading;
   },
 
-  updateGlucoseReading(id: string, userId: string, updates: Partial<GlucoseReading>): GlucoseReading | null {
+  async updateGlucoseReading(id: string, userId: string, updates: Partial<GlucoseReading>): Promise<GlucoseReading | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const updated = await GlucoseReadingModel.findOneAndUpdate(
+          { id, userId },
+          { $set: { ...updates, updatedAt: new Date().toISOString() } },
+          { new: true }
+        ).lean();
+        if (updated) return formatMongoDoc(updated);
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const index = store.glucose.findIndex((g) => g.id === id && g.userId === userId);
     if (index === -1) return null;
@@ -584,7 +759,16 @@ export const memoryDb = {
     return store.glucose[index];
   },
 
-  deleteGlucoseReading(id: string, userId: string): boolean {
+  async deleteGlucoseReading(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await GlucoseReadingModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const initialLen = store.glucose.length;
     store.glucose = store.glucose.filter((g) => !(g.id === id && g.userId === userId));
@@ -593,21 +777,52 @@ export const memoryDb = {
     return changed;
   },
 
-  // Medications
-  getMedications(userId: string): Medication[] {
+  // --- Medication Operations ---
+  async getMedications(userId: string): Promise<Medication[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await MedicationModel.find({ userId }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.medications.filter((m) => m.userId === userId);
   },
 
-  addMedication(med: Medication): Medication {
+  async addMedication(med: Medication): Promise<Medication> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await MedicationModel.findOneAndUpdate({ id: med.id }, med, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addMedication warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.medications.push(med);
     persistStoreToDisk();
     return med;
   },
 
-  updateMedication(id: string, userId: string, updates: Partial<Medication>): Medication | null {
+  async updateMedication(id: string, userId: string, updates: Partial<Medication>): Promise<Medication | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const updated = await MedicationModel.findOneAndUpdate({ id, userId }, { $set: updates }, { new: true }).lean();
+        if (updated) return formatMongoDoc(updated);
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const index = store.medications.findIndex((m) => m.id === id && m.userId === userId);
     if (index === -1) return null;
@@ -620,7 +835,16 @@ export const memoryDb = {
     return store.medications[index];
   },
 
-  deleteMedication(id: string, userId: string): boolean {
+  async deleteMedication(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await MedicationModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const initialLen = store.medications.length;
     store.medications = store.medications.filter((m) => !(m.id === id && m.userId === userId));
@@ -629,8 +853,20 @@ export const memoryDb = {
     return changed;
   },
 
-  // Medication Logs
-  getMedicationLogs(userId: string): MedicationLog[] {
+  // --- Medication Log Operations ---
+  async getMedicationLogs(userId: string): Promise<MedicationLog[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await MedicationLogModel.find({ userId }).sort({ scheduledAt: -1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.medicationLogs
@@ -638,15 +874,36 @@ export const memoryDb = {
       .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
   },
 
-  addMedicationLog(log: MedicationLog): MedicationLog {
+  async addMedicationLog(log: MedicationLog): Promise<MedicationLog> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await MedicationLogModel.findOneAndUpdate({ id: log.id }, log, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addMedicationLog warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.medicationLogs.unshift(log);
     persistStoreToDisk();
     return log;
   },
 
-  // Meals
-  getMeals(userId: string): Meal[] {
+  // --- Meal Operations ---
+  async getMeals(userId: string): Promise<Meal[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await MealModel.find({ userId }).sort({ date: -1, time: -1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.meals
@@ -654,14 +911,22 @@ export const memoryDb = {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   },
 
-  addMeal(meal: Meal): Meal {
+  async addMeal(meal: Meal): Promise<Meal> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await MealModel.findOneAndUpdate({ id: meal.id }, meal, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addMeal warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.meals.unshift(meal);
 
-    // Auto-deduct connected ration ingredients from this month's ration
     if (meal.rationIngredients && meal.rationIngredients.length > 0) {
       for (const ing of meal.rationIngredients) {
-        memoryDb.deductRation(ing.rationId, meal.userId, ing.quantity);
+        this.deductRation(ing.rationId, meal.userId, ing.quantity);
       }
     }
 
@@ -669,15 +934,23 @@ export const memoryDb = {
     return meal;
   },
 
-  deleteMeal(id: string, userId: string): boolean {
+  async deleteMeal(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await MealModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const targetMeal = store.meals.find((m) => m.id === id && m.userId === userId);
     if (!targetMeal) return false;
 
-    // Restore connected ration quantities if any
     if (targetMeal.rationIngredients && targetMeal.rationIngredients.length > 0) {
       for (const ing of targetMeal.rationIngredients) {
-        memoryDb.restoreRation(ing.rationId, userId, ing.quantity);
+        this.restoreRation(ing.rationId, userId, ing.quantity);
       }
     }
 
@@ -686,8 +959,20 @@ export const memoryDb = {
     return true;
   },
 
-  // Activities
-  getActivities(userId: string): Activity[] {
+  // --- Physical Activity Operations ---
+  async getActivities(userId: string): Promise<Activity[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await ActivityModel.find({ userId }).sort({ date: -1, time: -1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.activities
@@ -695,14 +980,32 @@ export const memoryDb = {
       .sort((a, b) => new Date(b.date + "T" + b.time).getTime() - new Date(a.date + "T" + a.time).getTime());
   },
 
-  addActivity(act: Activity): Activity {
+  async addActivity(act: Activity): Promise<Activity> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await ActivityModel.findOneAndUpdate({ id: act.id }, act, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addActivity warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.activities.unshift(act);
     persistStoreToDisk();
     return act;
   },
 
-  deleteActivity(id: string, userId: string): boolean {
+  async deleteActivity(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await ActivityModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const len = store.activities.length;
     store.activities = store.activities.filter((a) => !(a.id === id && a.userId === userId));
@@ -711,8 +1014,20 @@ export const memoryDb = {
     return changed;
   },
 
-  // Appointments
-  getAppointments(userId: string): Appointment[] {
+  // --- Appointment Operations ---
+  async getAppointments(userId: string): Promise<Appointment[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await AppointmentModel.find({ userId }).sort({ date: 1, time: 1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.appointments
@@ -720,14 +1035,33 @@ export const memoryDb = {
       .sort((a, b) => new Date(a.date + "T" + a.time).getTime() - new Date(b.date + "T" + b.time).getTime());
   },
 
-  addAppointment(app: Appointment): Appointment {
+  async addAppointment(app: Appointment): Promise<Appointment> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await AppointmentModel.findOneAndUpdate({ id: app.id }, app, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addAppointment warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.appointments.push(app);
     persistStoreToDisk();
     return app;
   },
 
-  updateAppointment(id: string, userId: string, updates: Partial<Appointment>): Appointment | null {
+  async updateAppointment(id: string, userId: string, updates: Partial<Appointment>): Promise<Appointment | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const updated = await AppointmentModel.findOneAndUpdate({ id, userId }, { $set: updates }, { new: true }).lean();
+        if (updated) return formatMongoDoc(updated);
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const index = store.appointments.findIndex((a) => a.id === id && a.userId === userId);
     if (index === -1) return null;
@@ -739,7 +1073,16 @@ export const memoryDb = {
     return store.appointments[index];
   },
 
-  deleteAppointment(id: string, userId: string): boolean {
+  async deleteAppointment(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await AppointmentModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const len = store.appointments.length;
     store.appointments = store.appointments.filter((a) => !(a.id === id && a.userId === userId));
@@ -748,8 +1091,22 @@ export const memoryDb = {
     return changed;
   },
 
-  // Rations
-  getRations(userId: string, month?: string): RationItem[] {
+  // --- Ration & Pantry Operations ---
+  async getRations(userId: string, month?: string): Promise<RationItem[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const query: any = { userId };
+        if (month) query.month = month;
+        const docs = await RationItemModel.find(query).sort({ name: 1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.rations
@@ -757,19 +1114,45 @@ export const memoryDb = {
       .sort((a, b) => a.name.localeCompare(b.name));
   },
 
-  getRationById(id: string, userId: string): RationItem | undefined {
-    const store = getMemoryStore();
-    return store.rations.find((r) => r.id === id && r.userId === userId);
+  async getRationItems(userId: string, month?: string): Promise<RationItem[]> {
+    return this.getRations(userId, month);
   },
 
-  addRation(ration: RationItem): RationItem {
+  async addRationItem(item: RationItem): Promise<RationItem> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await RationItemModel.findOneAndUpdate({ id: item.id }, item, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addRationItem warning:", err.message);
+    }
+
     const store = getMemoryStore();
-    store.rations.push(ration);
+    store.rations.push(item);
     persistStoreToDisk();
-    return ration;
+    return item;
   },
 
-  updateRation(id: string, userId: string, updates: Partial<RationItem>): RationItem | null {
+  async addRation(ration: RationItem): Promise<RationItem> {
+    return this.addRationItem(ration);
+  },
+
+  async updateRationItem(id: string, userId: string, updates: Partial<RationItem>): Promise<RationItem | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const updated = await RationItemModel.findOneAndUpdate(
+          { id, userId },
+          { $set: { ...updates, updatedAt: new Date().toISOString() } },
+          { new: true }
+        ).lean();
+        if (updated) return formatMongoDoc(updated);
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const idx = store.rations.findIndex((r) => r.id === id && r.userId === userId);
     if (idx === -1) return null;
@@ -782,7 +1165,20 @@ export const memoryDb = {
     return store.rations[idx];
   },
 
-  deleteRation(id: string, userId: string): boolean {
+  async updateRation(id: string, userId: string, updates: Partial<RationItem>): Promise<RationItem | null> {
+    return this.updateRationItem(id, userId, updates);
+  },
+
+  async deleteRationItem(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await RationItemModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const len = store.rations.length;
     store.rations = store.rations.filter((r) => !(r.id === id && r.userId === userId));
@@ -791,7 +1187,23 @@ export const memoryDb = {
     return changed;
   },
 
-  deductRation(rationId: string, userId: string, quantity: number): boolean {
+  async deleteRation(id: string, userId: string): Promise<boolean> {
+    return this.deleteRationItem(id, userId);
+  },
+
+  async deductRation(rationId: string, userId: string, quantity: number): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await RationItemModel.updateOne(
+          { id: rationId, userId },
+          { $inc: { usedQuantity: quantity } }
+        );
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const item = store.rations.find((r) => r.id === rationId && r.userId === userId);
     if (!item) return false;
@@ -801,7 +1213,19 @@ export const memoryDb = {
     return true;
   },
 
-  restoreRation(rationId: string, userId: string, quantity: number): boolean {
+  async restoreRation(rationId: string, userId: string, quantity: number): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await RationItemModel.updateOne(
+          { id: rationId, userId },
+          { $inc: { usedQuantity: -quantity } }
+        );
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const item = store.rations.find((r) => r.id === rationId && r.userId === userId);
     if (!item) return false;
@@ -811,48 +1235,20 @@ export const memoryDb = {
     return true;
   },
 
-  // Daily Logs & Routines
-  getDailyLog(userId: string, date: string): DailyLogRecord | undefined {
-    const store = getMemoryStore();
-    return store.dailyLogs.find((l) => l.userId === userId && l.date === date);
-  },
-
-  saveDailyLog(log: DailyLogRecord): DailyLogRecord {
-    const store = getMemoryStore();
-    const idx = store.dailyLogs.findIndex((l) => l.userId === log.userId && l.date === log.date);
-    const now = new Date().toISOString();
-    let result: DailyLogRecord;
-    if (idx >= 0) {
-      store.dailyLogs[idx] = {
-        ...store.dailyLogs[idx],
-        ...log,
-        updatedAt: now,
-      };
-      result = store.dailyLogs[idx];
-    } else {
-      const newLog = {
-        ...log,
-        id: log.id || `daily-log-${Date.now()}`,
-        createdAt: now,
-        updatedAt: now,
-      };
-      store.dailyLogs.push(newLog);
-      result = newLog;
+  // --- Diagnostic Lab Reports ---
+  async getLabReports(userId: string): Promise<LabReport[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await LabReportModel.find({ userId }).sort({ date: -1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
     }
-    persistStoreToDisk();
-    return result;
-  },
 
-  getDailyLogs(userId: string, limit = 30): DailyLogRecord[] {
-    const store = getMemoryStore();
-    return store.dailyLogs
-      .filter((l) => l.userId === userId)
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, limit);
-  },
-
-  // Lab & Diagnostic Reports
-  getLabReports(userId: string): LabReport[] {
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return store.labReports
@@ -860,14 +1256,32 @@ export const memoryDb = {
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   },
 
-  addLabReport(report: LabReport): LabReport {
+  async addLabReport(report: LabReport): Promise<LabReport> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await LabReportModel.findOneAndUpdate({ id: report.id }, report, { upsert: true, new: true });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] addLabReport warning:", err.message);
+    }
+
     const store = getMemoryStore();
     store.labReports.unshift(report);
     persistStoreToDisk();
     return report;
   },
 
-  deleteLabReport(id: string, userId: string): boolean {
+  async deleteLabReport(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await LabReportModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     const len = store.labReports.length;
     store.labReports = store.labReports.filter((r) => !(r.id === id && r.userId === userId));
@@ -876,8 +1290,20 @@ export const memoryDb = {
     return changed;
   },
 
-  // Apple Fitness Daily Logs (Calories, Step Count, Step Distance)
-  getAppleFitnessLogs(userId: string): AppleFitnessDayLog[] {
+  // --- Apple Fitness Daily Logs (3 Strict Metrics: Calories, Steps, Distance) ---
+  async getAppleFitnessLogs(userId: string): Promise<AppleFitnessDayLog[]> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const docs = await AppleFitnessDayLogModel.find({ userId }).sort({ date: -1 }).lean();
+        if (docs && docs.length > 0) {
+          return docs.map((d: any) => formatMongoDoc(d));
+        }
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     return (store.appleFitnessLogs || [])
@@ -885,7 +1311,17 @@ export const memoryDb = {
       .sort((a, b) => b.date.localeCompare(a.date));
   },
 
-  getAppleFitnessLogForDate(userId: string, date: string): AppleFitnessDayLog | null {
+  async getAppleFitnessLogForDate(userId: string, date: string): Promise<AppleFitnessDayLog | null> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const doc = await AppleFitnessDayLogModel.findOne({ userId, date }).lean();
+        if (doc) return formatMongoDoc(doc);
+      }
+    } catch {
+      // fallback
+    }
+
     this.ensureUserStarterData(userId);
     const store = getMemoryStore();
     const found = (store.appleFitnessLogs || []).find(
@@ -894,70 +1330,129 @@ export const memoryDb = {
     return found || null;
   },
 
-  saveAppleFitnessLog(userId: string, data: AppleFitnessLogInput): AppleFitnessDayLog {
-    this.ensureUserStarterData(userId);
+  async saveAppleFitnessLog(userId: string, data: AppleFitnessLogInput): Promise<AppleFitnessDayLog> {
+    const now = new Date().toISOString();
+    const id = `fit-${userId}-${data.date}`;
+    const logDoc: AppleFitnessDayLog = {
+      id,
+      userId,
+      date: data.date,
+      calories: Number(data.calories),
+      stepCount: Number(data.stepCount),
+      stepDistance: Number(data.stepDistance),
+      caloriesGoal: Number(data.caloriesGoal || 500),
+      stepCountGoal: Number(data.stepCountGoal || 10000),
+      stepDistanceGoal: Number(data.stepDistanceGoal || 5.0),
+      notes: data.notes || "",
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await AppleFitnessDayLogModel.findOneAndUpdate(
+          { userId, date: data.date },
+          { $set: logDoc },
+          { upsert: true, new: true }
+        );
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] saveAppleFitnessLog warning:", err.message);
+    }
+
     const store = getMemoryStore();
     if (!store.appleFitnessLogs) store.appleFitnessLogs = [];
-
-    const existingIdx = store.appleFitnessLogs.findIndex(
-      (f) => f.userId === userId && f.date === data.date
-    );
-
-    const now = new Date().toISOString();
-
-    if (existingIdx >= 0) {
-      const existing = store.appleFitnessLogs[existingIdx];
-      const updated: AppleFitnessDayLog = {
-        ...existing,
-        calories: Number(data.calories),
-        stepCount: Number(data.stepCount),
-        stepDistance: Number(data.stepDistance),
-        caloriesGoal: data.caloriesGoal ? Number(data.caloriesGoal) : (existing.caloriesGoal || 500),
-        stepCountGoal: data.stepCountGoal ? Number(data.stepCountGoal) : (existing.stepCountGoal || 10000),
-        stepDistanceGoal: data.stepDistanceGoal ? Number(data.stepDistanceGoal) : (existing.stepDistanceGoal || 5.0),
-        notes: data.notes !== undefined ? data.notes : existing.notes,
-        updatedAt: now,
-      };
-      store.appleFitnessLogs[existingIdx] = updated;
-      persistStoreToDisk();
-      return updated;
+    const idx = store.appleFitnessLogs.findIndex((f) => f.userId === userId && f.date === data.date);
+    if (idx >= 0) {
+      store.appleFitnessLogs[idx] = logDoc;
     } else {
-      const newLog: AppleFitnessDayLog = {
-        id: `fit-${userId}-${data.date}-${Date.now()}`,
-        userId,
-        date: data.date,
-        calories: Number(data.calories),
-        stepCount: Number(data.stepCount),
-        stepDistance: Number(data.stepDistance),
-        caloriesGoal: Number(data.caloriesGoal || 500),
-        stepCountGoal: Number(data.stepCountGoal || 10000),
-        stepDistanceGoal: Number(data.stepDistanceGoal || 5.0),
-        notes: data.notes || "",
-        createdAt: now,
-        updatedAt: now,
-      };
-      store.appleFitnessLogs.unshift(newLog);
-      persistStoreToDisk();
-      return newLog;
+      store.appleFitnessLogs.unshift(logDoc);
     }
+    persistStoreToDisk();
+    return logDoc;
   },
 
-  deleteAppleFitnessLog(id: string, userId: string): boolean {
+  async deleteAppleFitnessLog(id: string, userId: string): Promise<boolean> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await AppleFitnessDayLogModel.deleteOne({ id, userId });
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
     if (!store.appleFitnessLogs) return false;
     const len = store.appleFitnessLogs.length;
-    store.appleFitnessLogs = store.appleFitnessLogs.filter(
-      (f) => !(f.id === id && f.userId === userId)
-    );
+    store.appleFitnessLogs = store.appleFitnessLogs.filter((f) => !(f.id === id && f.userId === userId));
     const changed = store.appleFitnessLogs.length < len;
     if (changed) persistStoreToDisk();
     return changed;
   },
 
-  // Password Reset Tokens
-  saveResetToken(email: string, token: string, expiresInMs = 60 * 60 * 1000): void {
+  // --- Daily Checklist Logs ---
+  async getDailyLog(userId: string, date: string): Promise<DailyLogRecord | undefined> {
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const doc = await DailyLogRecordModel.findOne({ userId, date }).lean();
+        if (doc) return formatMongoDoc(doc);
+      }
+    } catch {
+      // fallback
+    }
+
     const store = getMemoryStore();
+    return store.dailyLogs.find((l) => l.userId === userId && l.date === date);
+  },
+
+  async saveDailyLog(log: DailyLogRecord): Promise<DailyLogRecord> {
+    const now = new Date().toISOString();
+    const id = log.id || `daily-log-${log.userId}-${log.date}`;
+    const record = { ...log, id, updatedAt: now };
+
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await DailyLogRecordModel.findOneAndUpdate(
+          { userId: log.userId, date: log.date },
+          { $set: record },
+          { upsert: true, new: true }
+        );
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] saveDailyLog warning:", err.message);
+    }
+
+    const store = getMemoryStore();
+    const idx = store.dailyLogs.findIndex((l) => l.userId === log.userId && l.date === log.date);
+    if (idx >= 0) {
+      store.dailyLogs[idx] = record;
+    } else {
+      store.dailyLogs.push(record);
+    }
+    persistStoreToDisk();
+    return record;
+  },
+
+  // --- Password Reset Security Tokens ---
+  async saveResetToken(email: string, token: string, expiresInMs = 60 * 60 * 1000): Promise<void> {
     const normalizedEmail = email.toLowerCase().trim();
+    const expiresAt = new Date(Date.now() + expiresInMs);
+
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        await ResetTokenModel.deleteMany({ email: normalizedEmail });
+        await ResetTokenModel.create({ email: normalizedEmail, token, expiresAt });
+      }
+    } catch (err: any) {
+      console.warn("[MongoDB] saveResetToken warning:", err.message);
+    }
+
+    const store = getMemoryStore();
     if (!store.resetTokens) store.resetTokens = [];
     store.resetTokens = store.resetTokens.filter(
       (r) => r.email !== normalizedEmail && r.expiresAt > Date.now()
@@ -965,23 +1460,47 @@ export const memoryDb = {
     store.resetTokens.push({
       email: normalizedEmail,
       token,
-      expiresAt: Date.now() + expiresInMs,
+      expiresAt: expiresAt.getTime(),
     });
     persistStoreToDisk();
   },
 
-  verifyResetToken(email: string, token: string): boolean {
-    const store = getMemoryStore();
+  async verifyResetToken(email: string, token: string): Promise<boolean> {
     const normalizedEmail = email.toLowerCase().trim();
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const found = await ResetTokenModel.findOne({
+          email: normalizedEmail,
+          token,
+          expiresAt: { $gt: new Date() },
+        }).lean();
+        if (found) return true;
+      }
+    } catch {
+      // fallback
+    }
+
+    const store = getMemoryStore();
     const found = store.resetTokens?.find(
       (r) => r.email === normalizedEmail && r.token === token && r.expiresAt > Date.now()
     );
     return Boolean(found);
   },
 
-  consumeResetToken(email: string, token: string): boolean {
-    const store = getMemoryStore();
+  async consumeResetToken(email: string, token: string): Promise<boolean> {
     const normalizedEmail = email.toLowerCase().trim();
+    try {
+      const m = await connectToDatabase();
+      if (m) {
+        const res = await ResetTokenModel.deleteOne({ email: normalizedEmail, token });
+        if (res.deletedCount && res.deletedCount > 0) return true;
+      }
+    } catch {
+      // fallback
+    }
+
+    const store = getMemoryStore();
     const idx = store.resetTokens?.findIndex(
       (r) => r.email === normalizedEmail && r.token === token && r.expiresAt > Date.now()
     );
@@ -993,48 +1512,25 @@ export const memoryDb = {
     return false;
   },
 
-  // Doctor Clinical Portal: Patient Full Clinical Dossier
-  getPatientFullDossier(patientId: string) {
+  // --- Clinician Inspection Dossier ---
+  async getPatientFullDossier(patientId: string) {
     this.ensureUserStarterData(patientId);
-    const store = getMemoryStore();
-    const user = this.getUserById(patientId);
+    const user = await this.getUserById(patientId);
     if (!user) return null;
 
-    const glucose = store.glucose
-      .filter((g) => g.userId === patientId)
-      .sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
+    const glucose = await this.getGlucoseReadings(patientId);
+    const medications = await this.getMedications(patientId);
+    const medicationLogs = await this.getMedicationLogs(patientId);
+    const meals = await this.getMeals(patientId);
+    const activities = await this.getActivities(patientId);
+    const appointments = await this.getAppointments(patientId);
+    const rations = await this.getRations(patientId);
+    const labReports = await this.getLabReports(patientId);
+    const appleFitnessLogs = await this.getAppleFitnessLogs(patientId);
 
-    const medications = store.medications.filter((m) => m.userId === patientId);
-    const medicationLogs = store.medicationLogs
-      .filter((l) => l.userId === patientId)
-      .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime());
-
-    const meals = store.meals
-      .filter((m) => m.userId === patientId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    const activities = store.activities
-      .filter((a) => a.userId === patientId)
-      .sort((a, b) => new Date(b.date + "T" + b.time).getTime() - new Date(a.date + "T" + a.time).getTime());
-
-    const appointments = store.appointments
-      .filter((a) => a.userId === patientId)
-      .sort((a, b) => new Date(a.date + "T" + a.time).getTime() - new Date(b.date + "T" + b.time).getTime());
-
-    const rations = store.rations
-      .filter((r) => r.userId === patientId)
-      .sort((a, b) => a.name.localeCompare(b.name));
-
+    const store = getMemoryStore();
     const dailyLogs = store.dailyLogs
       .filter((l) => l.userId === patientId)
-      .sort((a, b) => b.date.localeCompare(a.date));
-
-    const labReports = store.labReports
-      .filter((r) => r.userId === patientId)
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-    const appleFitnessLogs = (store.appleFitnessLogs || [])
-      .filter((f) => f.userId === patientId)
       .sort((a, b) => b.date.localeCompare(a.date));
 
     const totalReadings = glucose.length;
@@ -1045,7 +1541,7 @@ export const memoryDb = {
     const totalSteps = activities.reduce((acc, a) => acc + (a.steps || 0), 0);
     const adherenceLogs = dailyLogs.slice(0, 14);
     const avgAdherence = adherenceLogs.length > 0
-      ? Math.round(adherenceLogs.reduce((acc, l) => acc + (l.adherencePercentage || 0), 0) / adherenceLogs.length)
+      ? Math.round(adherenceLogs.reduce((acc, l) => acc + ((l as any).adherencePercentage || 0), 0) / adherenceLogs.length)
       : 85;
 
     return {

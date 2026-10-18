@@ -16,11 +16,11 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get("date");
 
     if (date) {
-      const log = db.getAppleFitnessLogForDate(user.id, date);
+      const log = await db.getAppleFitnessLogForDate(user.id, date);
       return NextResponse.json({ log });
     }
 
-    const logs = db.getAppleFitnessLogs(user.id);
+    const logs = await db.getAppleFitnessLogs(user.id);
     return NextResponse.json({ logs });
   } catch (error) {
     console.error("Error fetching Apple Fitness logs:", error);
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const savedLog = db.saveAppleFitnessLog(user.id, result.data);
+    const savedLog = await db.saveAppleFitnessLog(user.id, result.data);
     return NextResponse.json({ log: savedLog }, { status: 201 });
   } catch (error) {
     console.error("Error saving Apple Fitness log:", error);

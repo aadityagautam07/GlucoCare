@@ -14,8 +14,8 @@ export async function GET() {
       );
     }
 
-    const users = memoryDb.getAllUsers();
-    const stats = memoryDb.getAdminStats();
+    const users = await memoryDb.getAllUsers();
+    const stats = await memoryDb.getAdminStats();
 
     return NextResponse.json({ users, stats });
   } catch (error) {
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const existingUser = memoryDb.getUserByEmail(email);
+    const existingUser = await memoryDb.getUserByEmail(email);
     if (existingUser) {
       return NextResponse.json(
         { error: "A user with this email address already exists" },
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    memoryDb.saveUser({ ...newUser, passwordHash });
+    await memoryDb.saveUser({ ...newUser, passwordHash });
 
     return NextResponse.json({ success: true, user: newUser }, { status: 201 });
   } catch (error) {

@@ -12,10 +12,10 @@ export default async function ReportsPage() {
     redirect("/login");
   }
 
-  const initialReadings = memoryDb.getGlucoseReadings(user.id);
-  const medications = memoryDb.getMedications(user.id);
-  const medicationLogs = memoryDb.getMedicationLogs(user.id);
-  const initialLabReports = memoryDb.getLabReports(user.id);
+  const initialReadings = await memoryDb.getGlucoseReadings(user.id);
+  const medications = await memoryDb.getMedications(user.id);
+  const medicationLogs = await memoryDb.getMedicationLogs(user.id);
+  const initialLabReports = await memoryDb.getLabReports(user.id);
 
   return (
     <ReportsView

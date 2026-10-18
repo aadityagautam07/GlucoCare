@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const activities = memoryDb.getActivities(user.id);
+    const activities = await memoryDb.getActivities(user.id);
     return NextResponse.json({ activities });
   } catch (error) {
     console.error("GET /api/activities error:", error);
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.addActivity(newAct);
+    const saved = await memoryDb.addActivity(newAct);
     return NextResponse.json({ activity: saved }, { status: 201 });
   } catch (error) {
     console.error("POST /api/activities error:", error);

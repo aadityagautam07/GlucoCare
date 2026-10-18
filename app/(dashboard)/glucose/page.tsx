@@ -12,7 +12,7 @@ export default async function GlucosePage() {
     redirect("/login");
   }
 
-  const readings = memoryDb.getGlucoseReadings(user.id);
+  const readings = await memoryDb.getGlucoseReadings(user.id);
 
   return <GlucoseView user={user} readings={readings} />;
 }

@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const cutoffDate = new Date();
     cutoffDate.setDate(now.getDate() - daysParam);
 
-    const allReadings = memoryDb.getGlucoseReadings(user.id);
+    const allReadings = await memoryDb.getGlucoseReadings(user.id);
     const periodReadings = allReadings.filter(
       (r) => new Date(r.measuredAt).getTime() >= cutoffDate.getTime()
     );
@@ -53,21 +53,24 @@ export async function GET(req: Request) {
     }
 
     // Medication adherence
-    const logs = memoryDb.getMedicationLogs(user.id).filter(
+    const allMedLogs = await memoryDb.getMedicationLogs(user.id);
+    const logs = allMedLogs.filter(
       (l) => new Date(l.scheduledAt).getTime() >= cutoffDate.getTime()
     );
     const takenCount = logs.filter((l) => l.status === "taken").length;
     const medicationAdherencePct = logs.length > 0 ? Math.round((takenCount / logs.length) * 100) : 100;
 
     // Activity stats
-    const activities = memoryDb.getActivities(user.id).filter(
+    const allActivities = await memoryDb.getActivities(user.id);
+    const activities = allActivities.filter(
       (a) => new Date(a.date).getTime() >= cutoffDate.getTime()
     );
     const totalActivityMinutes = activities.reduce((acc, a) => acc + a.durationMinutes, 0);
     const totalSteps = activities.reduce((acc, a) => acc + (a.steps || 0), 0);
 
     // Meals stats
-    const meals = memoryDb.getMeals(user.id).filter(
+    const allMeals = await memoryDb.getMeals(user.id);
+    const meals = allMeals.filter(
       (m) => new Date(m.date).getTime() >= cutoffDate.getTime()
     );
 

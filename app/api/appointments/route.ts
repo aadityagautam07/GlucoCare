@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const appointments = memoryDb.getAppointments(user.id);
+    const appointments = await memoryDb.getAppointments(user.id);
     return NextResponse.json({ appointments });
   } catch (error) {
     console.error("GET /api/appointments error:", error);
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.addAppointment(newApp);
+    const saved = await memoryDb.addAppointment(newApp);
     return NextResponse.json({ appointment: saved }, { status: 201 });
   } catch (error) {
     console.error("POST /api/appointments error:", error);

@@ -17,7 +17,7 @@ export async function GET(
     }
 
     const { id } = await params;
-    const dossier = memoryDb.getPatientFullDossier(id);
+    const dossier = await memoryDb.getPatientFullDossier(id);
     if (!dossier) {
       return NextResponse.json({ error: "Patient record not found" }, { status: 404 });
     }
@@ -61,12 +61,12 @@ export async function PATCH(
     const body = await req.json();
     const { role, status, permissions, name, email } = body;
 
-    const existing = memoryDb.getUserById(id);
+    const existing = await memoryDb.getUserById(id);
     if (!existing) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const updated = memoryDb.updateUserRoleAndPermissions(
+    const updated = await memoryDb.updateUserRoleAndPermissions(
       id,
       (role as UserRole) || existing.role,
       (status as UserStatus) || existing.status,
@@ -74,7 +74,7 @@ export async function PATCH(
     );
 
     if (name || email) {
-      memoryDb.updateUser(id, {
+      await memoryDb.updateUser(id, {
         ...(name ? { name } : {}),
         ...(email ? { email } : {}),
       });
@@ -110,7 +110,7 @@ export async function DELETE(
       );
     }
 
-    const deleted = memoryDb.deleteUser(id);
+    const deleted = await memoryDb.deleteUser(id);
     if (!deleted) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

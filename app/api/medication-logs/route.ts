@@ -11,7 +11,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const logs = memoryDb.getMedicationLogs(user.id);
+    const logs = await memoryDb.getMedicationLogs(user.id);
     return NextResponse.json({ logs });
   } catch (error) {
     console.error("GET /api/medication-logs error:", error);
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     const { medicationId, status, notes } = result.data;
-    const medications = memoryDb.getMedications(user.id);
+    const medications = await memoryDb.getMedications(user.id);
     const medication = medications.find((m) => m.id === medicationId);
 
     const newLog: MedicationLog = {
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.addMedicationLog(newLog);
+    const saved = await memoryDb.addMedicationLog(newLog);
     return NextResponse.json({ log: saved }, { status: 201 });
   } catch (error) {
     console.error("POST /api/medication-logs error:", error);

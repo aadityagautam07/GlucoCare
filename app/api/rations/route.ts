@@ -21,7 +21,7 @@ export async function GET(req: Request) {
 
     const effectiveUserId = (isAdmin(user) && targetUserId) ? targetUserId : user.id;
 
-    const rations = memoryDb.getRations(effectiveUserId, month);
+    const rations = await memoryDb.getRations(effectiveUserId, month);
     return NextResponse.json({ rations });
   } catch (error) {
     console.error("GET /api/rations error:", error);
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
       updatedAt: now,
     };
 
-    const saved = memoryDb.addRation(newRation);
+    const saved = await memoryDb.addRation(newRation);
     return NextResponse.json({ ration: saved }, { status: 201 });
   } catch (error) {
     console.error("POST /api/rations error:", error);

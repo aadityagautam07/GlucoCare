@@ -12,8 +12,8 @@ export default async function MealsPage() {
     redirect("/login");
   }
 
-  const meals = memoryDb.getMeals(user.id);
-  const rations = memoryDb.getRations(user.id);
+  const meals = await memoryDb.getMeals(user.id);
+  const rations = await memoryDb.getRations(user.id);
 
   return <MealsView meals={meals} rations={rations} user={user} />;
 }

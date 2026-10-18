@@ -60,7 +60,7 @@ export async function getSessionUser(): Promise<UserProfile | null> {
       return null;
     }
 
-    const user = memoryDb.getUserById(payload.userId);
+    const user = await memoryDb.getUserById(payload.userId);
     if (user) {
       return {
         ...user,

@@ -15,7 +15,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = db.deleteAppleFitnessLog(id, user.id);
+    const deleted = await db.deleteAppleFitnessLog(id, user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Record not found" }, { status: 404 });

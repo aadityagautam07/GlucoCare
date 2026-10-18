@@ -24,7 +24,7 @@ export async function PUT(
       );
     }
 
-    const updated = memoryDb.updateRation(id, user.id, result.data);
+    const updated = await memoryDb.updateRation(id, user.id, result.data);
 
     if (!updated) {
       return NextResponse.json({ error: "Ration item not found" }, { status: 404 });
@@ -48,7 +48,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = memoryDb.deleteRation(id, user.id);
+    const deleted = await memoryDb.deleteRation(id, user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Ration item not found" }, { status: 404 });

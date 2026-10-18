@@ -28,7 +28,7 @@ export async function PUT(
     const data = result.data;
     const normalizedMgDl = convertToMgDl(data.value, data.unit);
 
-    const updated = memoryDb.updateGlucoseReading(id, user.id, {
+    const updated = await memoryDb.updateGlucoseReading(id, user.id, {
       value: normalizedMgDl,
       unit: data.unit,
       context: data.context,
@@ -60,7 +60,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = memoryDb.deleteGlucoseReading(id, user.id);
+    const deleted = await memoryDb.deleteGlucoseReading(id, user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Reading not found" }, { status: 404 });

@@ -15,7 +15,7 @@ export async function PUT(
     const { id } = await params;
     const body = await req.json();
 
-    const updated = memoryDb.updateAppointment(id, user.id, body);
+    const updated = await memoryDb.updateAppointment(id, user.id, body);
     if (!updated) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });
     }
@@ -38,7 +38,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = memoryDb.deleteAppointment(id, user.id);
+    const deleted = await memoryDb.deleteAppointment(id, user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Appointment not found" }, { status: 404 });

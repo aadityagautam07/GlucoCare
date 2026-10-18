@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     const { email, password } = result.data;
-    const userWithHash = memoryDb.getUserByEmail(email);
+    const userWithHash = await memoryDb.getUserByEmail(email);
 
     if (!userWithHash) {
       return NextResponse.json(

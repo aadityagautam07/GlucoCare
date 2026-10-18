@@ -11,7 +11,7 @@ export async function PUT(req: Request) {
 
     const body = await req.json();
 
-    const existingUser = memoryDb.getUserById(user.id);
+    const existingUser = await memoryDb.getUserById(user.id);
     if (!existingUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -25,7 +25,7 @@ export async function PUT(req: Request) {
       notifications: body.notifications ? { ...existingUser.notifications, ...body.notifications } : existingUser.notifications,
     };
 
-    memoryDb.saveUser(updatedUser);
+    await memoryDb.saveUser(updatedUser);
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error) {

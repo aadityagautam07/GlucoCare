@@ -12,8 +12,8 @@ export default async function ActivityPage() {
     redirect("/login");
   }
 
-  const activities = memoryDb.getActivities(user.id);
-  const appleFitnessLogs = memoryDb.getAppleFitnessLogs(user.id);
+  const activities = await memoryDb.getActivities(user.id);
+  const appleFitnessLogs = await memoryDb.getAppleFitnessLogs(user.id);
 
   return <ActivityView activities={activities} initialFitnessLogs={appleFitnessLogs} />;
 }

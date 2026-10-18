@@ -12,8 +12,8 @@ export default async function MedicationsPage() {
     redirect("/login");
   }
 
-  const medications = memoryDb.getMedications(user.id);
-  const medicationLogs = memoryDb.getMedicationLogs(user.id);
+  const medications = await memoryDb.getMedications(user.id);
+  const medicationLogs = await memoryDb.getMedicationLogs(user.id);
 
   return <MedicationsView medications={medications} medicationLogs={medicationLogs} />;
 }

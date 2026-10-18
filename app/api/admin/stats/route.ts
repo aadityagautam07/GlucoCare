@@ -12,7 +12,7 @@ export async function GET() {
       );
     }
 
-    const stats = memoryDb.getAdminStats();
+    const stats = await memoryDb.getAdminStats();
     return NextResponse.json({ stats });
   } catch (error) {
     console.error("GET /api/admin/stats error:", error);

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
     // Verify token if supplied
     if (token) {
-      const isValid = memoryDb.verifyResetToken(trimmedEmail, token);
+      const isValid = await memoryDb.verifyResetToken(trimmedEmail, token);
       if (!isValid) {
         return NextResponse.json(
           { error: "Invalid or expired security code. Please request a new reset email." },
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const user = memoryDb.getUserByEmail(trimmedEmail);
+    const user = await memoryDb.getUserByEmail(trimmedEmail);
     if (!user) {
       return NextResponse.json(
         { error: `No registered account found with email "${trimmedEmail}". Please register a new account.` },
@@ -49,11 +49,11 @@ export async function POST(req: Request) {
 
     const newHash = await hashPassword(newPassword);
     user.passwordHash = newHash;
-    memoryDb.saveUser(user);
+    await memoryDb.saveUser(user);
 
     // Consume token if it was provided
     if (token) {
-      memoryDb.consumeResetToken(trimmedEmail, token);
+      await memoryDb.consumeResetToken(trimmedEmail, token);
     }
 
     return NextResponse.json({

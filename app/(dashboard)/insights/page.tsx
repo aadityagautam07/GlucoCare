@@ -12,10 +12,10 @@ export default async function InsightsPage() {
     redirect("/login");
   }
 
-  const glucoseReadings = memoryDb.getGlucoseReadings(user.id);
-  const medicationLogs = memoryDb.getMedicationLogs(user.id);
-  const meals = memoryDb.getMeals(user.id);
-  const activities = memoryDb.getActivities(user.id);
+  const glucoseReadings = await memoryDb.getGlucoseReadings(user.id);
+  const medicationLogs = await memoryDb.getMedicationLogs(user.id);
+  const meals = await memoryDb.getMeals(user.id);
+  const activities = await memoryDb.getActivities(user.id);
 
   return (
     <div className="space-y-6">

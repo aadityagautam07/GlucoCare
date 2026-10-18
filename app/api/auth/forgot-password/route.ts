@@ -22,7 +22,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const user = memoryDb.getUserByEmail(trimmedEmail);
+    const user = await memoryDb.getUserByEmail(trimmedEmail);
     if (!user) {
       // Security best practice: don't reveal user existence, but for demo clarity give clear guidance
       return NextResponse.json(
@@ -39,9 +39,9 @@ export async function POST(req: Request) {
     const combinedToken = `${token}-${tokenSecret}`;
 
     // Save token with 1 hour expiration in persistent store
-    memoryDb.saveResetToken(trimmedEmail, combinedToken, 60 * 60 * 1000);
+    await memoryDb.saveResetToken(trimmedEmail, combinedToken, 60 * 60 * 1000);
     // Also save simple 6-digit code for direct user entry
-    memoryDb.saveResetToken(trimmedEmail, token, 60 * 60 * 1000);
+    await memoryDb.saveResetToken(trimmedEmail, token, 60 * 60 * 1000);
 
     // Determine host URL for reset link
     const origin =

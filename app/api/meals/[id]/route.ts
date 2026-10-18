@@ -13,7 +13,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const deleted = memoryDb.deleteMeal(id, user.id);
+    const deleted = await memoryDb.deleteMeal(id, user.id);
 
     if (!deleted) {
       return NextResponse.json({ error: "Meal not found" }, { status: 404 });

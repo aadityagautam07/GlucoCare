@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const targetUserId = searchParams.get("targetUserId");
     const effectiveUserId = (isAdmin(user) && targetUserId) ? targetUserId : user.id;
 
-    const medications = memoryDb.getMedications(effectiveUserId);
+    const medications = await memoryDb.getMedications(effectiveUserId);
     return NextResponse.json({ medications });
   } catch (error) {
     console.error("GET /api/medications error:", error);
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.addMedication(newMed);
+    const saved = await memoryDb.addMedication(newMed);
     return NextResponse.json({ medication: saved }, { status: 201 });
   } catch (error) {
     console.error("POST /api/medications error:", error);

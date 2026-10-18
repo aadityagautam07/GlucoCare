@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const date = searchParams.get("date") || new Date().toISOString().split("T")[0];
 
-    const log = memoryDb.getDailyLog(user.id, date);
+    const log = await memoryDb.getDailyLog(user.id, date);
 
     return NextResponse.json({
       success: true,
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    const saved = memoryDb.saveDailyLog(dailyLog);
+    const saved = await memoryDb.saveDailyLog(dailyLog);
 
     return NextResponse.json({
       success: true,

@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const adminKey = typeof body.adminKey === "string" ? body.adminKey.trim() : "";
 
     // Check existing
-    const existing = memoryDb.getUserByEmail(email);
+    const existing = await memoryDb.getUserByEmail(email);
     if (existing) {
       return NextResponse.json(
         { error: "An account with this email already exists" },
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    memoryDb.saveUser(newUser);
+    await memoryDb.saveUser(newUser);
 
     const token = await createSessionToken({
       userId: newUser.id,

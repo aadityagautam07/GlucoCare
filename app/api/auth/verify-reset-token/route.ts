@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     }
 
     const trimmedEmail = email.trim().toLowerCase();
-    const isValid = memoryDb.verifyResetToken(trimmedEmail, token);
+    const isValid = await memoryDb.verifyResetToken(trimmedEmail, token);
 
     return NextResponse.json({
       valid: isValid,
