@@ -51,7 +51,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <MobileNav onOpenQuickAction={() => setQuickSheetOpen(true)} />
+      <MobileNav onOpenQuickAction={() => setQuickSheetOpen(true)} user={user} />
 
       {/* Central Quick Action Sheet */}
       <QuickActionSheet

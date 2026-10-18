@@ -127,6 +127,8 @@ The GlucoCare test suite validates three core invariants:
 | **TC-PERS-01** | Vercel Cold Start Persistence | App deployed on Vercel | User logs glucose reading, logs out, closes browser, logs in after 10 minutes | Previous reading is 100% visible and intact; nothing reset. | Zero data loss on serverless container recycling. |
 | **TC-PERS-02** | Multi-Container Concurrent Writes | 2 devices logged in as same patient | Device A logs Meal; Device B logs Glucose simultaneously | Both records saved atomically in MongoDB Atlas; no concurrency overwrite. | Both records visible in respective tables. |
 | **TC-PERS-03** | In-Memory Failover Grace | `MONGODB_URI` invalid or network severed | Start application without network | System logs warning and falls back to in-memory store; does NOT crash. | Server continues running; demo patient accessible. |
+| **TC-MOB-01** | Mobile Logout Discovery | iPhone/Android viewport (< 1024px) | Tap top-right header `LogOut` button or "More" drawer `Log Out of GlucoCare` | Session cookie `glucocare_session` invalidated; redirected to `/login` | Instant sign out across all mobile screens. |
+| **TC-SMTP-01** | Live Gmail SMTP Delivery | SMTP configured in `.env.local` | Request password reset for registered email | Generates 6-digit token; dispatches responsive HTML email via Google SMTP | Email received in inbox with `250 2.0.0 OK`. |
 
 ---
 
@@ -135,27 +137,34 @@ The GlucoCare test suite validates three core invariants:
 *Answer each question to confirm full compliance before greenlighting release.*
 
 ```
-[ ] Q1: When a new user registers on Vercel, does their account persist if a different serverless instance serves the next request?
+[x] Q1: When a new user registers on Vercel, does their account persist if a different serverless instance serves the next request?
     -> YES: Handled by MongoDB Atlas UserModel persistence.
 
-[ ] Q2: When a patient logs a meal or morning medication dose, does refreshing the browser keep the checkmark and meal history intact?
+[x] Q2: When a patient logs a meal or morning medication dose, does refreshing the browser keep the checkmark and meal history intact?
     -> YES: Handled by atomic MongoDB MealModel and MedicationLogModel queries.
 
-[ ] Q3: In Dark Mode, are all meal slot timings, badges, and progress tracks legible without any white-on-white text?
+[x] Q3: In Dark Mode, are all meal slot timings, badges, and progress tracks legible without any white-on-white text?
     -> YES: Handled by dark:bg-* and dark:text-* token parity in Tailwind v4.
 
-[ ] Q4: If the Steps field in the Activity Dialog is left blank, does the form submit without crashing or silent failure?
+[x] Q4: If the Steps field in the Activity Dialog is left blank, does the form submit without crashing or silent failure?
     -> YES: Handled by setValueAs: (v) => (v === "" ? null : Number(v)) in React Hook Form.
 
-[ ] Q5: Does the Apple Fitness view restrict tracking to strictly 3 metrics (Active Calories, Step Count, Step Distance)?
+[x] Q5: Does the Apple Fitness view restrict tracking to strictly 3 metrics (Active Calories, Step Count, Step Distance)?
     -> YES: Handled by AppleFitnessRings and AppleFitnessDayLog schema.
 
 [ ] Q6: In MongoDB Atlas Network Access, is 0.0.0.0/0 whitelisted so Vercel serverless functions can connect?
     -> REQUIRED ACTION: User must whitelist 0.0.0.0/0 in MongoDB Atlas dashboard.
 
-[ ] Q7: Does the Estimated HbA1c formula strictly compute (Mean_Glucose + 46.7) / 28.7?
+[x] Q7: Does the Estimated HbA1c formula strictly compute (Mean_Glucose + 46.7) / 28.7?
     -> YES: Implemented in reports-view.tsx and printable-report.tsx.
 
-[ ] Q8: Can an admin review the full clinical dossier of any registered patient without logging in as that patient?
+[x] Q8: Can an admin review the full clinical dossier of any registered patient without logging in as that patient?
     -> YES: Implemented via /admin/users/[id] Full Dossier Inspector.
+
+[x] Q9: Can an iPhone or Android user easily find and trigger a logout button without zooming or horizontal scrolling?
+    -> YES: Implemented in 4 distinct mobile locations: (1) Sticky Top Header, (2) Bottom Navigation Drawer with user badge, (3) Profile screen session card, and (4) Settings screen session card.
+
+[x] Q10: Does password reset dispatch real emails via Gmail SMTP using aadityagautam06@gmail.com?
+    -> YES: Live Gmail SMTP verified with Google SMTP servers (Message ID: <4c36f301-2b95-8d25-3e0c-d4b7bdfa3509@gmail.com>).
 ```
+

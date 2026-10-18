@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   LayoutDashboard,
   Activity as GlucoseIcon,
@@ -17,16 +18,37 @@ import {
   Settings,
   User,
   X,
+  LogOut,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { UserProfile } from "@/types";
 
 interface MobileNavProps {
   onOpenQuickAction: () => void;
+  user?: UserProfile | null;
 }
 
-export function MobileNav({ onOpenQuickAction }: MobileNavProps) {
+export function MobileNav({ onOpenQuickAction, user }: MobileNavProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [moreOpen, setMoreOpen] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await fetch("/api/auth/logout", { method: "POST" });
+      toast.success("Signed out successfully");
+      setMoreOpen(false);
+      router.push("/login");
+      router.refresh();
+    } catch {
+      router.push("/login");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const moreLinks = [
     { label: "Medications", href: "/medications", icon: Pill },
@@ -37,6 +59,14 @@ export function MobileNav({ onOpenQuickAction }: MobileNavProps) {
     { label: "My Profile", href: "/profile", icon: User },
     { label: "Settings", href: "/settings", icon: Settings },
   ];
+
+  if (user?.role === "admin" || user?.role === "doctor") {
+    moreLinks.unshift({
+      label: user?.role === "doctor" ? "Doctor Portal" : "Admin Portal",
+      href: "/admin",
+      icon: ShieldCheck,
+    });
+  }
 
   return (
     <>
@@ -119,10 +149,10 @@ export function MobileNav({ onOpenQuickAction }: MobileNavProps) {
             className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs"
             onClick={() => setMoreOpen(false)}
           />
-          <div className="relative z-50 bg-white dark:bg-slate-900 rounded-t-3xl p-6 border-t border-slate-200 dark:border-slate-800 shadow-2xl max-h-[80vh] overflow-y-auto mb-16 animate-in slide-in-from-bottom duration-200">
+          <div className="relative z-50 bg-white dark:bg-slate-900 rounded-t-3xl p-6 border-t border-slate-200 dark:border-slate-800 shadow-2xl max-h-[85vh] overflow-y-auto mb-16 animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
               <h3 className="font-bold text-base text-slate-900 dark:text-white">
-                Additional Sections
+                All Health Portals & Tools
               </h3>
               <button
                 onClick={() => setMoreOpen(false)}
@@ -159,10 +189,55 @@ export function MobileNav({ onOpenQuickAction }: MobileNavProps) {
                 );
               })}
             </div>
+
+            {/* User Session & Logout Panel */}
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+              {user && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="h-9 w-9 rounded-full bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-300 flex items-center justify-center font-bold text-xs shrink-0">
+                      {user.name ? user.name.slice(0, 2).toUpperCase() : "PT"}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">
+                        {user.name}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                  {user.role && (
+                    <span
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded font-bold uppercase shrink-0",
+                        user.role === "admin"
+                          ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
+                          : user.role === "doctor"
+                          ? "bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300"
+                          : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"
+                      )}
+                    >
+                      {user.role}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Prominent Red Sign Out Button */}
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="w-full flex items-center justify-center gap-2.5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 font-bold text-sm hover:bg-rose-100 dark:hover:bg-rose-900/60 active:scale-[0.99] transition-all shadow-xs"
+              >
+                <LogOut className="h-4 w-4 stroke-[2.5]" />
+                <span>{isLoggingOut ? "Signing out..." : "Log Out of GlucoCare"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
     </>
   );
 }
-

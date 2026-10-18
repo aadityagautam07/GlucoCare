@@ -7,6 +7,7 @@ import {
   Shield,
   Save,
   CheckCircle2,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -25,6 +26,21 @@ interface SettingsViewProps {
 export function SettingsView({ user }: SettingsViewProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await fetch("/api/auth/logout", { method: "POST" });
+      toast.success("Signed out successfully");
+      router.push("/login");
+      router.refresh();
+    } catch {
+      router.push("/login");
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const [glucoseUnit, setGlucoseUnit] = React.useState<GlucoseUnit>(user.glucoseUnit);
   const [medReminders, setMedReminders] = React.useState(
@@ -200,6 +216,38 @@ export function SettingsView({ user }: SettingsViewProps) {
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>Zero medical diagnosis claims: All summaries are strictly observational tracking aids.</span>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Account & Session Sign Out */}
+        <Card className="shadow-xs border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40">
+          <CardHeader className="flex flex-row items-center gap-3 pb-2">
+            <div className="h-8 w-8 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+              <LogOut className="h-4 w-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
+                Account Session & Log Out
+              </CardTitle>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Signed in as <strong>{user.email}</strong>
+              </p>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              End your active session on this mobile device or browser.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleLogout}
+              isLoading={isLoggingOut}
+              className="text-rose-600 border-rose-200 dark:border-rose-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/50 dark:text-rose-400 gap-2 shrink-0 font-semibold"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out of GlucoCare
+            </Button>
           </CardContent>
         </Card>
 

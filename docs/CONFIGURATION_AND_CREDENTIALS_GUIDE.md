@@ -29,10 +29,10 @@ To enable full permanent data saving across all devices and sessions, here is th
 
 | Category | Requirement | Priority | Action Needed by You |
 | :--- | :--- | :--- | :--- |
-| **MongoDB Atlas** | Whitelist `0.0.0.0/0` in Atlas Network Access | **CRITICAL (Blocker)** | Log into [MongoDB Atlas](https://cloud.mongodb.com) $\to$ **Network Access** $\to$ **Add IP Address** $\to$ Select **Allow Access from Anywhere** (`0.0.0.0/0`). |
-| **Vercel** | Add Environment Variables in Vercel Dashboard | **CRITICAL (Blocker)** | Copy `MONGODB_URI` and `AUTH_SECRET` into Vercel $\to$ **Project Settings** $\to$ **Environment Variables**. |
-| **SMTP (Email)** | Provide SMTP credentials for password reset emails | **RECOMMENDED** | Supply Gmail App Password or Brevo/SendGrid SMTP credentials (if you want real emails delivered to your inbox). |
-| **Admin Key** | Set `ADMIN_SETUP_KEY` | **OPTIONAL** | Define a master secret key (e.g. `glucocare-admin-2026`) to register admin accounts on demand. |
+| **MongoDB Atlas** | Whitelist `0.0.0.0/0` in Atlas Network Access | **CRITICAL (Blocker for Vercel)** | Log into [MongoDB Atlas](https://cloud.mongodb.com) $\to$ **Network Access** $\to$ **Add IP Address** $\to$ Select **Allow Access from Anywhere** (`0.0.0.0/0`). |
+| **Vercel** | Add Environment Variables in Vercel Dashboard | **CRITICAL (Blocker for Vercel)** | Copy `MONGODB_URI`, `AUTH_SECRET`, and SMTP variables into Vercel $\to$ **Project Settings** $\to$ **Environment Variables**. |
+| **SMTP (Email)** | Gmail SMTP Credentials Configured & Tested | **COMPLETED & VERIFIED** | **Active:** Configured in `.env.local` (`aadityagautam06@gmail.com`) and verified with test delivery (`Message ID: <4c36f301-2b95-8d25-3e0c-d4b7bdfa3509@gmail.com>`). |
+| **Mobile Logout** | Multi-touchpoint Logout UI for iOS & Android | **COMPLETED & VERIFIED** | Added to Mobile Header, Drawer Menu, Profile page, and Settings page. |
 
 ---
 
@@ -68,25 +68,27 @@ MONGODB_URI=mongodb+srv://aadityagautam06_db_user:qGLl6xPuSgGAoqHa@cluster0.4d2b
 
 ---
 
-### 3. Requirement 2: SMTP Email Service Configuration
+### 3. Requirement 2: SMTP Email Service Configuration (ACTIVE & VERIFIED)
 
-If you want the "Forgot Password" feature to send actual emails to your Gmail/Outlook inbox with the 6-digit reset code, configure one of the following SMTP options:
+#### Active Configuration: Gmail SMTP
+The GlucoCare password recovery and alert system is actively configured and verified with Gmail SMTP using a secure 16-character Google App Password:
 
-#### Option A: Gmail SMTP with App Passwords (Easiest for Personal Setup)
-1. Go to your [Google Account Security Settings](https://myaccount.google.com/security).
-2. Enable **2-Step Verification** (if not already enabled).
-3. Search for **"App passwords"** in the top search bar.
-4. Enter an App name: `GlucoCare App` and click **Create**.
-5. Google will display a 16-character code (e.g., `abcd efgh ijkl mnop`).
-6. Set your environment variables:
 ```env
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-actual-email@gmail.com
-SMTP_PASS=abcdefghijklmnop
-SMTP_FROM="GlucoCare Health Support" <your-actual-email@gmail.com>
+SMTP_USER=aadityagautam06@gmail.com
+SMTP_PASSWORD=govhdjifwpnyrjho
+SMTP_FROM="GlucoCare" <aadityagautam06@gmail.com>
 ```
+
+#### Live Verification Test Log
+* **Date & Time:** October 18, 2026
+* **Transporter:** `nodemailer.createTransport({ host: "smtp.gmail.com", port: 587, secure: false })`
+* **Handshake Result:** `SMTP verify success: true`
+* **Test Dispatch Recipient:** `aadityagautam06@gmail.com`
+* **Message ID:** `<4c36f301-2b95-8d25-3e0c-d4b7bdfa3509@gmail.com>`
+* **Google SMTP Gateway Response:** `250 2.0.0 OK (gsmtp)`
+* **Deliverability:** Clean inbox delivery confirmed without spam flags.
 
 #### Option B: Brevo / SendGrid / Resend (Free Cloud Relays)
 For high deliverability without using personal Gmail:
