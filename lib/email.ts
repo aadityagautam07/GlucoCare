@@ -20,11 +20,12 @@ export interface EmailSendResult {
  * or falls back to an Ethereal test account for seamless offline/dev verification.
  */
 async function getEmailTransporter() {
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587;
   const secure = process.env.SMTP_SECURE === "true" || port === 465;
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const rawPass = process.env.SMTP_PASS || process.env.SMTP_PASSWORD;
+  const pass = rawPass ? rawPass.replace(/\s+/g, "") : "";
 
   // Real SMTP configured
   if (host && user && pass) {
@@ -71,7 +72,10 @@ export async function sendPasswordResetEmail({
   try {
     const transporter = await getEmailTransporter();
     const fromAddress =
-      process.env.SMTP_FROM || '"GlucoCare Health Support" <noreply@glucocare.health>';
+      process.env.SMTP_FROM ||
+      (process.env.SMTP_USER
+        ? `"GlucoCare" <${process.env.SMTP_USER}>`
+        : '"GlucoCare Health Support" <noreply@glucocare.health>');
 
     const htmlContent = `
 <!DOCTYPE html>
